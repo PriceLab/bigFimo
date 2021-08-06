@@ -1,0 +1,93 @@
+library(RUnit)
+#----------------------------------------------------------------------------------------------------
+source("~/fimoParallel/R/FimoParallel.R")
+#----------------------------------------------------------------------------------------------------
+runTests <- function()
+{
+    test_bach1.promoter()
+    #test_bach1.geneHancer()
+    
+} # runTests
+#---------------------------------------------------------------------------------------------------
+test_bach1.promoter <- function()
+{
+    message(sprintf("--- test_bach1.promoter"))
+
+       # delete any results files left over from previous run
+    files <- list.files(path="BACH1", pattern="*.RData")
+    if(length(files) > 0)
+       unlink(file.path("BACH1", files))
+
+    fimoThreshold <- 1e-5
+    processCount <- 10
+
+    runner <- FimoParallel$new("BACH1", fimoThreshold, processCount, "chr21", 29298789, 29299657)
+    runner$runMany()
+
+    Sys.sleep(10)
+    completed <- FALSE
+    while(!completed){
+       file.count <- length(list.files(path="BACH1", pattern="*.RData"))
+       completed <- (file.count == processCount)
+       if(!completed){
+          printf("waiting for completion: %d/%d", file.count, processCount)
+          Sys.sleep(3)
+          }
+       } # while
+     printf("complete %d/%d", processCount, processCount)
+
+    files <- list.files(path="BACH1", pattern="*.RData")
+    tbls <- list()
+    for(i in seq_len(length(files))){
+        tbls[[i]] <- get(load(file.path("BACH1", files[i])))
+        }
+
+    tbl <- do.call(rbind, tbls)                
+    sort.order <- order(tbl$start, decreasing=FALSE)
+    tbl <- unique(tbl[sort.order,])
+    checkEquals(dim(tbl), c(161, 9))
+
+} # test_bach1.promoter
+#---------------------------------------------------------------------------------------------------
+test_bach1.geneHancer <- function()
+{
+    message(sprintf("--- test_bach1.geneHancer"))
+
+       # delete any results files left over from previous run
+    files <- list.files(path="BACH1", pattern="*.RData")
+    if(length(files) > 0)
+       unlink(file.path("BACH1", files))
+
+    fimoThreshold <- 1e-3
+    processCount <- 30
+
+    runner <- FimoParallel$new("BACH1", fimoThreshold, processCount)
+    runner$runMany()
+
+    Sys.sleep(10)
+    completed <- FALSE
+    while(!completed){
+       file.count <- length(list.files(path="BACH1", pattern="*.RData"))
+       completed <- (file.count == processCount)
+       if(!completed){
+          printf("waiting for completion: %d/%d", file.count, processCount)
+          Sys.sleep(3)
+          }
+       } # while
+     printf("completed %d/%d",  processCount,processCount)
+
+  #  files <- list.files(path="BACH1", pattern="*.RData")
+  #  tbls <- list()
+  #  for(i in seq_len(length(files))){
+  #      tbls[[i]] <- get(load(file.path("BACH1", files[i])))
+  #      }
+
+  #  tbl <- do.call(rbind, tbls)                
+  #  sort.order <- order(tbl$start, decreasing=FALSE)
+  #  tbl <- unique(tbl[sort.order,])
+  #  checkEquals(dim(tbl), c(2021, 9))
+
+} # test_bach1.geneHancer
+#---------------------------------------------------------------------------------------------------
+if(!interactive())
+    test_bach1.geneHancer()
