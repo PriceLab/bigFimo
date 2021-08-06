@@ -93,7 +93,7 @@ test_brandLab.combine.atac.and.gh.BACH1 <- function()
 
     targetGene <- "BACH1"
 
-    tbl <- brandLab.combine.atac.and.gh(targetGene, 5000)
+    tbl <- brandLab.combine.atac.and.gh(targetGene, 50)
     dim(tbl)
     checkEquals(dim(tbl), c(194, 5))
     size <- sum(with(tbl, 1 + end - start))
@@ -103,7 +103,7 @@ test_brandLab.combine.atac.and.gh.BACH1 <- function()
     viz <- FALSE
     if(viz){
        igv <- start.igv(targetGene)
-       zoomOut(igv)
+       zoomOut(igv);       zoomOut(igv);
        tbl.gh <- retrieveEnhancersFromDatabase(ghdb, targetGene, tissues="all")
        if(!grepl("chr", tbl.gh$chrom[1]))
            tbl.gh$chrom <- paste0("chr", tbl.gh$chrom)
@@ -151,20 +151,23 @@ if(interactive()){
 tbl.gh.atac <- brandLab.combine.atac.and.gh(targetGene, 5000)
 tbl.oi <- subset(tbl.gh.atac, start >= section.start & end <= section.end)
 printf("nrow(tbl.oi): %d", nrow(tbl.oi))
-if(nrow(tbl.oi) > 0){
-    colnames(tbl.oi)[1] <- "chrom"
-    tbl.oi$chrom <- as.character(tbl.oi$chrom)
-    meme.file <- "~/github/bigFimo/jaspar2018-hocomocoCoreA.meme"
-    printf("%s:%d-%d  (%d)", section.chrom, section.start, section.end, section.size);
-    printf("fimo threshold: %20.10f", fimo.threshold)
+tbl.fimo <- data.frame()
 
-    tbl.fimo <- fimoBatch(tbl.oi, matchThreshold=fimo.threshold, genomeName="hg38", pwmFile=meme.file)
-    printf("fimo hits: %d", nrow(tbl.fimo))
-    date.string <- gsub(" +", "-", date())
-    filename <- sprintf("fimo.%s.%s.%d.%d.%s.RData", targetGene, section.chrom, section.start, section.end, date.string)
-    if(!file.exists(targetGene))
-        dir.create(targetGene)
-    path <- file.path(targetGene, filename)
-    save(tbl.fimo, file=path)
-    } # if section has gh+atac hits
+if(nrow(tbl.oi) > 0){
+   colnames(tbl.oi)[1] <- "chrom"
+   tbl.oi$chrom <- as.character(tbl.oi$chrom)
+   meme.file <- "~/github/bigFimo/jaspar2018-hocomocoCoreA.meme"
+   printf("%s:%d-%d  (%d)", section.chrom, section.start, section.end, section.size);
+   printf("fimo threshold: %20.10f", fimo.threshold)
+
+   tbl.fimo <- fimoBatch(tbl.oi, matchThreshold=fimo.threshold, genomeName="hg38", pwmFile=meme.file)
+   } # if section has gh+atac hits
+
+printf("fimo hits: %d", nrow(tbl.fimo))
+date.string <- gsub(" +", "-", date())
+filename <- sprintf("fimo.%s.%s.%d.%d.%s.RData", targetGene, section.chrom, section.start, section.end, date.string)
+if(!file.exists(targetGene))
+   dir.create(targetGene)
+path <- file.path(targetGene, filename)
+save(tbl.fimo, file=path)
 
