@@ -148,33 +148,23 @@ if(interactive()){
     fimo.threshold <- as.numeric(args[5])
     }
 
-print(1)
 tbl.gh.atac <- brandLab.combine.atac.and.gh(targetGene, 5000)
-print(2)
 tbl.oi <- subset(tbl.gh.atac, start >= section.start & end <= section.end)
 printf("nrow(tbl.oi): %d", nrow(tbl.oi))
 if(nrow(tbl.oi) > 0){
     colnames(tbl.oi)[1] <- "chrom"
     tbl.oi$chrom <- as.character(tbl.oi$chrom)
-    print(3)
     meme.file <- "~/github/bigFimo/jaspar2018-hocomocoCoreA.meme"
-    print(4)
     printf("%s:%d-%d  (%d)", section.chrom, section.start, section.end, section.size);
-    print(5)
     printf("fimo threshold: %20.10f", fimo.threshold)
-    print(6)
 
     tbl.fimo <- fimoBatch(tbl.oi, matchThreshold=fimo.threshold, genomeName="hg38", pwmFile=meme.file)
-    print(7)
     printf("fimo hits: %d", nrow(tbl.fimo))
-    print(8)
     date.string <- gsub(" +", "-", date())
     filename <- sprintf("fimo.%s.%s.%d.%d.%s.RData", targetGene, section.chrom, section.start, section.end, date.string)
-    print(9)
     if(!file.exists(targetGene))
         dir.create(targetGene)
     path <- file.path(targetGene, filename)
-    print(10)
     save(tbl.fimo, file=path)
     } # if section has gh+atac hits
 
