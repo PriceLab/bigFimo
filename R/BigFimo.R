@@ -1,7 +1,7 @@
 library(R6)
 library(ghdb)
 source("~/github/fimoService/batchMode/fimoBatchTools.R")
-FimoParallel = R6Class("DemoApp",
+BigFimo = R6Class("DemoApp",
 #--------------------------------------------------------------------------------
 private = list(targetGene=NULL,
                fimoThreshold=NULL,
@@ -38,7 +38,7 @@ public = list(
        runMany = function(){
            total.span <- 1 + private$loc.end - private$loc.start
            size <- as.numeric(round(1 + (total.span/private$processCount)))
-           script <- "~/fimoParallel/R/fimoProcess.R"
+           script <- "~/github/bigFimo/R/fimoProcess.R"
            printf("---- starting %d processes", private$processCount)
            for(i in seq_len(private$processCount)){
                start <- private$loc.start + ((i-1) * size)
@@ -52,6 +52,6 @@ public = list(
            }
     ) # public
 
-) # class FimoParallel
+) # class BigFimo
 #--------------------------------------------------------------------------------
 

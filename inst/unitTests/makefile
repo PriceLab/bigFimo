@@ -1,2 +1,2 @@
 default:
-	R -f test_FimoParallel.R
+	R -f test_BigFimo.R

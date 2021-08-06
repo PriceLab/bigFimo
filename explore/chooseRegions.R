@@ -1,7 +1,6 @@
 library(ghdb)
 library(GenomicRanges)
 library(RUnit)
-ghdb <- GeneHancerDB()
 #----------------------------------------------------------------------------------------------------
 runTests <- function()
 {
@@ -126,55 +125,3 @@ test_brandLab.combine.atac.and.gh.BACH1 <- function()
 
 } # test_brandLab.combine.atac.and.gh.BACH1
 #----------------------------------------------------------------------------------------------------
-source("~/github/fimoService/batchMode/fimoBatchTools.R")
-# bach1 promoter: chr21:29,298,789-29,299,657
-
-if(interactive()){
-   targetGene <- "BACH1"
-   section.chrom <- "chr21"
-   section.start <- 29304270
-   section.end   <- 29320980
-   section.size <- 1 + section.end - section.start
-   fimo.threshold <- 1e-6
-} else {
-    args <- commandArgs(trailingOnly=TRUE)
-    printf("arg count: %d", length(args))
-    stopifnot(length(args) == 5)
-    targetGene <- args[1]
-    section.chrom <- args[2]
-    section.start <- as.numeric(args[3])
-    section.end <- as.numeric(args[4])
-    section.size <- 1 + section.end - section.start
-    fimo.threshold <- as.numeric(args[5])
-    }
-
-print(1)
-tbl.gh.atac <- brandLab.combine.atac.and.gh(targetGene, 5000)
-print(2)
-tbl.oi <- subset(tbl.gh.atac, start >= section.start & end <= section.end)
-printf("nrow(tbl.oi): %d", nrow(tbl.oi))
-if(nrow(tbl.oi) > 0){
-    colnames(tbl.oi)[1] <- "chrom"
-    tbl.oi$chrom <- as.character(tbl.oi$chrom)
-    print(3)
-    meme.file <- "~/github/bigFimo/jaspar2018-hocomocoCoreA.meme"
-    print(4)
-    printf("%s:%d-%d  (%d)", section.chrom, section.start, section.end, section.size);
-    print(5)
-    printf("fimo threshold: %20.10f", fimo.threshold)
-    print(6)
-
-    tbl.fimo <- fimoBatch(tbl.oi, matchThreshold=fimo.threshold, genomeName="hg38", pwmFile=meme.file)
-    print(7)
-    printf("fimo hits: %d", nrow(tbl.fimo))
-    print(8)
-    date.string <- gsub(" +", "-", date())
-    filename <- sprintf("fimo.%s.%s.%d.%d.%s.RData", targetGene, section.chrom, section.start, section.end, date.string)
-    print(9)
-    if(!file.exists(targetGene))
-        dir.create(targetGene)
-    path <- file.path(targetGene, filename)
-    print(10)
-    save(tbl.fimo, file=path)
-    } # if section has gh+atac hits
-

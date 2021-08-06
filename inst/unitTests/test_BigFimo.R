@@ -1,12 +1,12 @@
 library(RUnit)
 #----------------------------------------------------------------------------------------------------
-source("~/fimoParallel/R/FimoParallel.R")
+source("~/github/BigFimo/R/BigFimo.R")
 #----------------------------------------------------------------------------------------------------
 runTests <- function()
 {
     test_bach1.promoter()
     #test_bach1.geneHancer()
-    
+
 } # runTests
 #---------------------------------------------------------------------------------------------------
 test_bach1.promoter <- function()
@@ -15,13 +15,21 @@ test_bach1.promoter <- function()
 
        # delete any results files left over from previous run
     files <- list.files(path="BACH1", pattern="*.RData")
+    length(files)
     if(length(files) > 0)
        unlink(file.path("BACH1", files))
 
-    fimoThreshold <- 1e-5
-    processCount <- 10
+    fimoThreshold <- 1e-6
+    processCount <- 2
 
-    runner <- FimoParallel$new("BACH1", fimoThreshold, processCount, "chr21", 29298789, 29299657)
+    chrom <- "chr21"
+      # a 16.7kb region
+    start <- 29304270
+    end   <- 29320980
+    fimoThreshold <- 1e-6
+
+    runner <- BigFimo$new("BACH1", fimoThreshold, processCount, chrom, start, end)
+
     runner$runMany()
 
     Sys.sleep(10)
@@ -42,10 +50,10 @@ test_bach1.promoter <- function()
         tbls[[i]] <- get(load(file.path("BACH1", files[i])))
         }
 
-    tbl <- do.call(rbind, tbls)                
+    tbl <- do.call(rbind, tbls)
     sort.order <- order(tbl$start, decreasing=FALSE)
     tbl <- unique(tbl[sort.order,])
-    checkEquals(dim(tbl), c(161, 9))
+    checkEquals(dim(tbl), c(17, 9))
 
 } # test_bach1.promoter
 #---------------------------------------------------------------------------------------------------
@@ -61,7 +69,7 @@ test_bach1.geneHancer <- function()
     fimoThreshold <- 1e-3
     processCount <- 30
 
-    runner <- FimoParallel$new("BACH1", fimoThreshold, processCount)
+    runner <- BigFimo$new("BACH1", fimoThreshold, processCount)
     runner$runMany()
 
     Sys.sleep(10)
@@ -82,7 +90,7 @@ test_bach1.geneHancer <- function()
   #      tbls[[i]] <- get(load(file.path("BACH1", files[i])))
   #      }
 
-  #  tbl <- do.call(rbind, tbls)                
+  #  tbl <- do.call(rbind, tbls)
   #  sort.order <- order(tbl$start, decreasing=FALSE)
   #  tbl <- unique(tbl[sort.order,])
   #  checkEquals(dim(tbl), c(2021, 9))
