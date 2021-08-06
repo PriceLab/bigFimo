@@ -1,6 +1,6 @@
 library(RUnit)
 #----------------------------------------------------------------------------------------------------
-source("~/github/BigFimo/R/BigFimo.R")
+source("~/github/bigFimo/R/BigFimo.R")
 #----------------------------------------------------------------------------------------------------
 runTests <- function()
 {
@@ -98,4 +98,5 @@ test_bach1.geneHancer <- function()
 } # test_bach1.geneHancer
 #---------------------------------------------------------------------------------------------------
 if(!interactive())
-    test_bach1.geneHancer()
+    runTests()
+
