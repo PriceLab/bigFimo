@@ -10,12 +10,13 @@ runFimoProcessTests <- function()
 
 } # runFimoProcessTests
 #----------------------------------------------------------------------------------------------------
-brandLab.combine.atac.and.gh <- function(targetGene, maxGap.between.atac.and.gh=5000)
+brandLab.combine.atac.and.gh <- function(targetGene, maxGap.between.atac.and.gh=5000, gh.elite.only=TRUE)
 {
     tbl.gh <- retrieveEnhancersFromDatabase(ghdb, targetGene, tissues="all")
 
       # reduce wide span by using only gh reports from two sources
-    tbl.gh <- subset(tbl.gh, elite)
+    if(gh.elite.only)
+      tbl.gh <- subset(tbl.gh, elite)
 
     if(!grepl("chr", tbl.gh$chrom[1]))
         tbl.gh$chrom <- paste0("chr", tbl.gh$chrom)
