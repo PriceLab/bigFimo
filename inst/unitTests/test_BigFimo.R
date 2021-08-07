@@ -107,6 +107,52 @@ test_bach1.with.empty.section <- function()
 
 } # test_bach1.with.empty.section
 #----------------------------------------------------------------------------------------------------
+test_rcor1 <- function()
+{
+    message(sprintf("--- test_rcor1"))
+
+    targetGene <- "RCOR1"
+
+    files <- list.files(path=targetGene, pattern="*.RData")
+    length(files)
+    aif(length(files) > 0)
+       unlink(file.path(targetGene, files))
+
+    processCount <- 4
+
+    fimoThreshold <- 1e-6
+
+    runner <- BigFimo$new(targetGene, fimoThreshold, processCount)
+
+    runner$runMany()
+
+    Sys.sleep(10)
+    completed <- FALSE
+    while(!completed){
+       file.count <- length(list.files(path="BACH1", pattern="*.RData"))
+       completed <- (file.count == processCount)
+       if(!completed){
+          printf("waiting for completion: %d/%d", file.count, processCount)
+          Sys.sleep(3)
+          }
+       } # while
+     printf("complete %d/%d", processCount, processCount)
+
+    files <- list.files(path="BACH1", pattern="*.RData")
+    tbls <- list()
+    for(i in seq_len(length(files))){
+        tbls[[i]] <- get(load(file.path("BACH1", files[i])))
+        }
+      # make sure there were some empty sections
+    checkTrue(0 %in% unlist(lapply(tbls, nrow)))
+    tbl <- do.call(rbind, tbls)
+
+    sort.order <- order(tbl$start, decreasing=FALSE)
+    tbl <- unique(tbl[sort.order,])
+    checkEquals(dim(tbl), c(10, 9))
+
+} # test_rcor1
+#----------------------------------------------------------------------------------------------------
 test_bach1.geneHancer <- function()
 {
     message(sprintf("--- test_bach1.geneHancer"))

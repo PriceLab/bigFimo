@@ -3,16 +3,19 @@ library(GenomicRanges)
 library(RUnit)
 ghdb <- GeneHancerDB()
 #----------------------------------------------------------------------------------------------------
-runTests <- function()
+runFimoProcessTests <- function()
 {
     test_brandLab.combine.atac.and.gh.RCOR1()
     test_brandLab.combine.atac.and.gh.BACH1()
 
-} # runTests
+} # runFimoProcessTests
 #----------------------------------------------------------------------------------------------------
 brandLab.combine.atac.and.gh <- function(targetGene, maxGap.between.atac.and.gh=5000)
 {
     tbl.gh <- retrieveEnhancersFromDatabase(ghdb, targetGene, tissues="all")
+
+      # reduce wide span by using only gh reports from two sources
+    tbl.gh <- subset(tbl.gh, elite)
 
     if(!grepl("chr", tbl.gh$chrom[1]))
         tbl.gh$chrom <- paste0("chr", tbl.gh$chrom)
@@ -25,7 +28,6 @@ brandLab.combine.atac.and.gh <- function(targetGene, maxGap.between.atac.and.gh=
     nrow(tbl.gh)
     gr.gh <- reduce(GRanges(tbl.gh))
     length(gr.gh)
-
 
     tbl.atacMerged <- get(load("~/github/TrenaProjectErythropoiesis/inst/extdata/genomicRegions/tbl.atacMerged.RData"))
     shoulder <- 100
@@ -58,30 +60,30 @@ test_brandLab.combine.atac.and.gh.RCOR1 <- function()
     message(sprintf("--- test_brandLab.cobmine.atac.and.gh.RCOR1"))
 
     tbl.rcor1 <- brandLab.combine.atac.and.gh("RCOR1")
-    checkEquals(dim(tbl.rcor1), c(131, 5))
+    checkEquals(dim(tbl.rcor1), c(52, 5))
     size <- sum(with(tbl.rcor1, 1 + end - start))
     size.mb <- round(size/1000000, digits=2)
-    checkEqualsNumeric(size.mb, 0.37, tolerance=0.01)
+    checkEqualsNumeric(size.mb, 0.16, tolerance=0.01)
 
        # maxGap 0
 
     tbl.rcor1 <- brandLab.combine.atac.and.gh("RCOR1", maxGap.between.atac.and.gh=0)
     dim(tbl.rcor1)
-    checkEquals(dim(tbl.rcor1), c(81, 5))
+    checkEquals(dim(tbl.rcor1), c(39, 5))
 
     size <- sum(with(tbl.rcor1, 1 + end - start))
     size.mb <- round(size/1000000, digits=2)
     size.mb
 
-    checkEqualsNumeric(size.mb, 0.29, tolerance=0.01)
+    checkEqualsNumeric(size.mb, 0.15, tolerance=0.01)
 
     tbl.rcor1 <- brandLab.combine.atac.and.gh("RCOR1", maxGap.between.atac.and.gh=10000)
     dim(tbl.rcor1)
-    checkEquals(dim(tbl.rcor1), c(158, 5))
+    checkEquals(dim(tbl.rcor1), c(52, 5))
     size <- sum(with(tbl.rcor1, 1 + end - start))
     size.mb <- round(size/1000000, digits=2)
     size.mb
-    checkEqualsNumeric(size.mb, 0.41, tolerance=0.01)
+    checkEqualsNumeric(size.mb, 0.16, tolerance=0.01)
 
 } # test_brandLab.combine.atac.and.gh.RCOR1
 #----------------------------------------------------------------------------------------------------
@@ -95,10 +97,11 @@ test_brandLab.combine.atac.and.gh.BACH1 <- function()
 
     tbl <- brandLab.combine.atac.and.gh(targetGene, 50)
     dim(tbl)
-    checkEquals(dim(tbl), c(194, 5))
+    checkEquals(dim(tbl), c(31, 5))
     size <- sum(with(tbl, 1 + end - start))
     size.mb <- round(size/1000000, digits=2)
-    checkEqualsNumeric(size.mb, 0.39, tolerance=0.01)
+    size.mb
+    checkEqualsNumeric(size.mb, 0.10, tolerance=0.01)
 
     viz <- FALSE
     if(viz){
@@ -132,7 +135,7 @@ source("~/github/fimoService/batchMode/fimoBatchTools.R")
 if(interactive()){
    targetGene <- "BACH1"
    section.chrom <- "chr21"
-   section.start <- 29304270
+   section.start <- 29304270    # much smaller than the region identified by gh+atac
    section.end   <- 29320980
    section.size <- 1 + section.end - section.start
    fimo.threshold <- 1e-6
