@@ -6,6 +6,7 @@ runTests <- function()
 {
     test_bach1.promoter()
     test_bach1.with.empty.section()
+    test_rcor1()
 
 } # runTests
 #---------------------------------------------------------------------------------------------------
@@ -115,7 +116,7 @@ test_rcor1 <- function()
 
     files <- list.files(path=targetGene, pattern="*.RData")
     length(files)
-    aif(length(files) > 0)
+    if(length(files) > 0)
        unlink(file.path(targetGene, files))
 
     processCount <- 4
