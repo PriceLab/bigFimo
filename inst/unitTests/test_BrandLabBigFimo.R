@@ -7,7 +7,10 @@ runTests <- function()
     test_ctor()
     test_specifiedRegionCtor()
     test_calculateRegionsForFimo_small()
+    test_includeOnlyGeneHancerIntersectingAtac()
     test_calculateRegionsForFimo_medium()
+    test_calculateRegionsForFimo_maximal()
+    test_includeOnlyGeneHancerIntersectingAtac()
 
 } # runTests
 #---------------------------------------------------------------------------------------------------
@@ -109,7 +112,7 @@ test_calculateRegionsForFimo_small <- function()
 
     bf$calculateRegionsForFimo()
     tbl.gh.atac <- bf$get.tbl.gh.atac()
-    checkEquals(dim(tbl.gh.atac), c(2, 5))
+    checkEquals(dim(tbl.gh.atac), c(3, 5))
 
 } # test_calculateRegionsForFimo_small
 #---------------------------------------------------------------------------------------------------
@@ -141,9 +144,101 @@ test_calculateRegionsForFimo_medium<- function()
 
     bf$calculateRegionsForFimo()
     tbl.gh.atac <- bf$get.tbl.gh.atac()
-    checkEquals(dim(tbl.gh.atac), c(21, 5))
+    checkEquals(dim(tbl.gh.atac), c(62, 5))
+
+    if(exists("igv")){
+      track <- DataFrameQuantitativeTrack("new.gh",
+                                          tbl.gh[, c("chrom", "start", "end", "combinedscore")],
+                                          autoscale=TRUE, color="darkgreen")
+      displayTrack(igv, track)
+      track <- DataFrameAnnotationTrack("gh.atac", tbl.gh.atac, color="red", trackHeight=23)
+      displayTrack(igv, track)
+      }
+
 
 } # test_calculateRegionsForFimo_medium
+#---------------------------------------------------------------------------------------------------
+test_includeOnlyGeneHancerIntersectingAtac <- function()
+{
+    message(sprintf("--- test_includeOnlyGeneHancerIntersectingAtac"))
+
+    targetGene <- "BACH1"
+    processCount <- 2
+    fimoThreshold <- 1e-6
+    gh.elite.only <- TRUE
+    maxGap.between.atac.and.gh <- 0
+
+       # this region was discovered using viz function below
+    chrom <- "chr21"
+    start <- 28995780
+    end   <- 29120251
+    end - start
+
+    bf <-  BrandLabBigFimo$new(targetGene,
+                               processCount,
+                               fimoThreshold,
+                               gh.elite.only,
+                               maxGap.between.atac.and.gh,
+                               chrom=chrom, start=start, end=end)
+    tbl.gh <- bf$get.tbl.gh()
+    checkEquals(nrow(tbl.gh), 2)
+    checkTrue(all(tbl.gh$elite))
+
+    bf$calculateRegionsForFimo()
+    tbl.gh.atac <- bf$get.tbl.gh.atac()
+    checkEquals(dim(tbl.gh.atac), c(3, 5))
+
+    if(exists("igv")){
+      track <- DataFrameQuantitativeTrack("new.gh",
+                                          tbl.gh[, c("chrom", "start", "end", "combinedscore")],
+                                          autoscale=TRUE, color="darkgreen")
+      displayTrack(igv, track)
+      track <- DataFrameAnnotationTrack("gh.atac", tbl.gh.atac, color="red", trackHeight=23)
+      displayTrack(igv, track)
+      }
+
+} # test_includeOnlyGeneHancerIntersectingAtac
+#----------------------------------------------------------------------------------------------------
+# maximal in these ways:  all genehancer regions for BACH1, elite and not
+test_calculateRegionsForFimo_maximal <- function()
+{
+    message(sprintf("--- test_calculateRegionsForFimo_maximal"))
+
+    targetGene <- "BACH1"
+    processCount <- 2
+    fimoThreshold <- 1e-6
+    gh.elite.only <- FALSE
+    maxGap.between.atac.and.gh <- 0
+
+       # this region was discovered using viz function below
+    chrom <- NA
+    start <- NA
+    end   <- NA
+
+    bf <-  BrandLabBigFimo$new(targetGene,
+                               processCount,
+                               fimoThreshold,
+                               gh.elite.only,
+                               maxGap.between.atac.and.gh,
+                               chrom=chrom, start=start, end=end)
+    tbl.gh <- bf$get.tbl.gh()
+    checkEquals(nrow(tbl.gh), 144)
+    checkTrue(!all(tbl.gh$elite))
+
+    bf$calculateRegionsForFimo()
+    tbl.gh.atac <- bf$get.tbl.gh.atac()
+    checkEquals(dim(tbl.gh.atac), c(114, 5))
+
+    if(exists("igv")){
+      track <- DataFrameQuantitativeTrack("new.gh",
+                                          tbl.gh[, c("chrom", "start", "end", "combinedscore")],
+                                          autoscale=TRUE, color="darkgreen")
+      displayTrack(igv, track)
+      track <- DataFrameAnnotationTrack("gh.atac", tbl.gh.atac, color="red", trackHeight=23)
+      displayTrack(igv, track)
+      }
+
+} # test_calculateRegionsForFimo_maximal
 #---------------------------------------------------------------------------------------------------
 viz <- function()
 {

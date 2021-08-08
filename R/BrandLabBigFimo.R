@@ -121,7 +121,7 @@ public = list(
          # an overlap
        gr.ov <- findOverlaps(gr.atac, gr.gh,
                              maxgap=private$maxGap.between.atac.and.gh)
-       gr.atac.near.gh <- reduce(gr.atac[subjectHits(gr.ov)])
+       gr.atac.near.gh <- reduce(gr.atac[queryHits(gr.ov)])
        tbl.gh.atac <- as.data.frame(gr.atac.near.gh)
 
          # add a width column, for subsequent convenience
