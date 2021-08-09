@@ -1,6 +1,6 @@
 library(RUnit)
 #----------------------------------------------------------------------------------------------------
-source("~/github/bigFimo/R/BrandLabBigFimo.R")
+source("~/github/bigFimo/R/BigFimo.R")
 #----------------------------------------------------------------------------------------------------
 runTests <- function()
 {
@@ -340,14 +340,14 @@ test_runMany <- function()
 
     while(!completed){
         file.count <- length(list.files(path=targetGene, pattern="^fimo.*"))
-        completed <- (file.count == processCount)
+        completed <- (file.count == actual.processes.needed)
         if(!completed){
             printf("waiting for completion: %d/%d", file.count, actual.processes.needed)
             Sys.sleep(3)
         }
     } # while
 
-    printf("complete %d/%d", processCount, processCount)
+    printf("complete %d/%d", actual.processes.needed, actual.processes.needed)
 
     result.files <- list.files(path=targetGene, pattern="^fimo.*")
     checkEquals(length(result.files), actual.processes.needed)
@@ -400,4 +400,3 @@ viz <- function()
 #---------------------------------------------------------------------------------------------------
 if(!interactive())
     runTests()
-

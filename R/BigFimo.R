@@ -162,9 +162,14 @@ public = list(
        },
 
     #------------------------------------------------------------------------
+    getFimoRegionsFileList = function(){
+        private$fimoRegionsFileList
+        },
+
+    #------------------------------------------------------------------------
     runMany = function(){
        script <- "~/github/bigFimo/R/fimoProcess.R"
-       printf("---- starting %d processes", private$processCount)
+       printf("---- starting %d processes", length(private$fimoRegionsFileList)) # private$processCount)
        for(fimoRegionsFile in private$fimoRegionsFileList){
            full.path <- file.path(private$targetGene, fimoRegionsFile)
            stopifnot(file.exists(full.path))
