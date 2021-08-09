@@ -28,14 +28,14 @@ test_ctor <- function()
 
        # first, without an explicit genomic region
 
-    bf <-  BrandLabBigFimo$new(targetGene,
-                               processCount,
-                               fimoThreshold,
-                               gh.elite.only,
-                               maxGap.between.atac.and.gh,
-                               chrom=NA, start=NA, end=NA)
+    bf <-  BigFimo$new(targetGene,
+                       processCount,
+                       fimoThreshold,
+                       gh.elite.only,
+                       maxGap.between.atac.and.gh,
+                       chrom=NA, start=NA, end=NA)
 
-    checkEquals(is(bf), "BrandLabBigFimo")
+    checkEquals(is(bf), "BigFimo")
     tbl.gh <- bf$get.tbl.gh()
     checkTrue(nrow(tbl.gh) > 100)
     checkEquals(unique(tbl.gh$gene), targetGene)
@@ -46,14 +46,14 @@ test_ctor <- function()
     start <- 29297661
     end <- 29300191
     gh.elite.only <- TRUE
-    bf <-  BrandLabBigFimo$new(targetGene,
+    bf <-  BigFimo$new(targetGene,
                                processCount,
                                fimoThreshold,
                                gh.elite.only,
                                maxGap.between.atac.and.gh,
                                chrom=chrom, start=start, end=end)
 
-    checkEquals(is(bf), "BrandLabBigFimo")
+    checkEquals(is(bf), "BigFimo")
     tbl.gh <- bf$get.tbl.gh()
     checkTrue(nrow(tbl.gh) < 40)
 
@@ -71,14 +71,14 @@ test_specifiedRegionCtor <- function()
     chrom <- "chr21"
     start <- 29297661
     end <- 29300191
-    bf <-  BrandLabBigFimo$new(targetGene,
+    bf <-  BigFimo$new(targetGene,
                                processCount,
                                fimoThreshold,
                                gh.elite.only,
                                maxGap.between.atac.and.gh,
                                chrom=chrom, start=start, end=end)
 
-    checkEquals(is(bf), "BrandLabBigFimo")
+    checkEquals(is(bf), "BigFimo")
     tbl.gh <- bf$get.tbl.gh()
     checkEquals(nrow(tbl.gh), 1)
     checkTrue(tbl.gh$elite)
@@ -102,7 +102,7 @@ test_calculateRegionsForFimo_small <- function()
     end   <- 29207473
     end - start
 
-    bf <-  BrandLabBigFimo$new(targetGene,
+    bf <-  BigFimo$new(targetGene,
                                processCount,
                                fimoThreshold,
                                gh.elite.only,
@@ -134,7 +134,7 @@ test_calculateRegionsForFimo_medium<- function()
     end   <- 29330888
     end - start
 
-    bf <-  BrandLabBigFimo$new(targetGene,
+    bf <-  BigFimo$new(targetGene,
                                processCount,
                                fimoThreshold,
                                gh.elite.only,
@@ -176,7 +176,7 @@ test_includeOnlyGeneHancerIntersectingAtac <- function()
     end   <- 29120251
     end - start
 
-    bf <-  BrandLabBigFimo$new(targetGene,
+    bf <-  BigFimo$new(targetGene,
                                processCount,
                                fimoThreshold,
                                gh.elite.only,
@@ -217,7 +217,7 @@ test_calculateRegionsForFimo_maximal <- function()
     start <- NA
     end   <- NA
 
-    bf <-  BrandLabBigFimo$new(targetGene,
+    bf <-  BigFimo$new(targetGene,
                                processCount,
                                fimoThreshold,
                                gh.elite.only,
@@ -258,7 +258,7 @@ test_createFimoTables <- function()
     end   <- 29120251
     end - start
 
-    bf <-  BrandLabBigFimo$new(targetGene,
+    bf <-  BigFimo$new(targetGene,
                                processCount,
                                fimoThreshold,
                                gh.elite.only,
@@ -281,7 +281,7 @@ test_createFimoTables <- function()
        # should get 4 files
 
 
-    bf <-  BrandLabBigFimo$new(targetGene,
+    bf <-  BigFimo$new(targetGene,
                                processCount=3,
                                fimoThreshold,
                                gh.elite.only,
@@ -323,7 +323,7 @@ test_runMany <- function()
     end   <- 29120251
     end - start
 
-    bf <-  BrandLabBigFimo$new(targetGene,
+    bf <-  BigFimo$new(targetGene,
                                processCount,
                                fimoThreshold,
                                gh.elite.only,

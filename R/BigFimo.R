@@ -1,7 +1,7 @@
 library(R6)
 library(ghdb)
 source("~/github/fimoService/batchMode/fimoBatchTools.R")
-BrandLabBigFimo = R6Class("BrandLabBigFimo",
+BigFimo = R6Class("BigFimo",
 #--------------------------------------------------------------------------------
 private = list(targetGene=NULL,
                fimoThreshold=NULL,
@@ -184,4 +184,3 @@ public = list(
 
 ) # class BigFimo
 #--------------------------------------------------------------------------------
-
