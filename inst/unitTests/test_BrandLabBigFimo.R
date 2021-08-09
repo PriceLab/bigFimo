@@ -7,10 +7,11 @@ runTests <- function()
     test_ctor()
     test_specifiedRegionCtor()
     test_calculateRegionsForFimo_small()
-    test_includeOnlyGeneHancerIntersectingAtac()
     test_calculateRegionsForFimo_medium()
     test_calculateRegionsForFimo_maximal()
     test_includeOnlyGeneHancerIntersectingAtac()
+
+    test_createFimoTables()
 
 } # runTests
 #---------------------------------------------------------------------------------------------------
@@ -239,6 +240,68 @@ test_calculateRegionsForFimo_maximal <- function()
       }
 
 } # test_calculateRegionsForFimo_maximal
+#---------------------------------------------------------------------------------------------------
+test_createFimoTables <- function()
+{
+    message(sprintf("--- test_createFimoTables"))
+
+    targetGene <- "BACH1"
+    processCount <- 2
+    fimoThreshold <- 1e-6
+    gh.elite.only <- FALSE
+    maxGap.between.atac.and.gh <- 5000
+
+       # this region was discovered using viz function below
+    chrom <- "chr21"
+    start <- 28995780
+    end   <- 29120251
+    end - start
+
+    bf <-  BrandLabBigFimo$new(targetGene,
+                               processCount,
+                               fimoThreshold,
+                               gh.elite.only,
+                               maxGap.between.atac.and.gh,
+                               chrom=chrom, start=start, end=end)
+    tbl.gh <- bf$get.tbl.gh()
+    checkEquals(nrow(tbl.gh), 11)
+    checkTrue(!all(tbl.gh$elite))
+
+    bf$calculateRegionsForFimo()
+    tbl.gh.atac <- bf$get.tbl.gh.atac()
+    checkEquals(dim(tbl.gh.atac), c(16, 5))
+
+    filenames.roi <- bf$createFimoTables()
+    checkTrue(all(file.exists(file.path(targetGene, filenames.roi))))
+
+} # test_createFimoTables
+#---------------------------------------------------------------------------------------------------
+test_runMany <- function()
+{
+    message(sprintf("--- test_runMany"))
+    targetGene <- "BACH1"
+    processCount <- 2
+    fimoThreshold <- 1e-6
+    gh.elite.only <- FALSE
+    maxGap.between.atac.and.gh <- 5000
+
+       # this region was discovered using viz function below
+    chrom <- "chr21"
+    start <- 28995780
+    end   <- 29120251
+    end - start
+
+    bf <-  BrandLabBigFimo$new(targetGene,
+                               processCount,
+                               fimoThreshold,
+                               gh.elite.only,
+                               maxGap.between.atac.and.gh,
+                               chrom=chrom, start=start, end=end)
+    bf$calculateRegionsForFimo()
+    filenames.roi <- bf$createFimoTables()
+    bf$runMany()
+
+} # test_runMany
 #---------------------------------------------------------------------------------------------------
 viz <- function()
 {

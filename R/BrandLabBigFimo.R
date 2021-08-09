@@ -7,6 +7,7 @@ private = list(targetGene=NULL,
                fimoThreshold=NULL,
                gh.elite.only=NULL,
                maxGap.between.atac.and.gh=NULL,
+               ocExpansion=NULL,
                tbl.gh=NULL,
                tbl.gh.atac=NULL,
                regionSize=NULL,
@@ -14,13 +15,15 @@ private = list(targetGene=NULL,
                chromosome=NULL,
                loc.start=NULL,
                loc.end=NULL,
-               motifs=NULL
+               motifs=NULL,
+               fimoRegionsFileList=NULL
                ),
 #--------------------------------------------------------------------------------
 public = list(
 
     initialize = function(targetGene, processCount, fimoThreshold, gh.elite.only=TRUE,
-                          maxGap.between.atac.and.gh=5000, chrom=NA, start=NA, end=NA){
+                          maxGap.between.atac.and.gh=5000, ocExpansion=100, chrom=NA,
+                          start=NA, end=NA){
          if(!file.exists(targetGene))
              dir.create(targetGene)
          private$targetGene  <- targetGene
@@ -28,6 +31,7 @@ public = list(
          private$fimoThreshold <- fimoThreshold
          private$gh.elite.only <- gh.elite.only
          private$maxGap.between.atac.and.gh <- maxGap.between.atac.and.gh
+         private$ocExpansion <- ocExpansion
          private$chromosome=chrom
          private$loc.start=start
          private$loc.end=end
@@ -87,14 +91,10 @@ public = list(
        },
 
     #------------------------------------------------------------------------
-    setup = function(){
-      },
-
-    #------------------------------------------------------------------------
     calculateRegionsForFimo = function(){
        tbl.gh <- private$tbl.gh   # convenience
        private$regionSize <- with(tbl.gh, max(end) - min(start))
-       printf("--- full genehancer region: %dk", round(private$regionSize/1000, digits=0))
+       printf("   full genehancer region: %dk", round(private$regionSize/1000, digits=0))
        if(private$gh.elite.only)
           tbl.gh <- subset(tbl.gh, elite)
        if(!grepl("chr", tbl.gh$chrom[1]))
@@ -110,7 +110,7 @@ public = list(
          # this shoulder artificially expands the atac hit regions
          # allowing for imprecision in those results.
 
-       shoulder <- 100
+       shoulder <- private$ocExpansion
        tbl.atac <- subset(tbl.atacMerged, chrom==private$chromosome &
                                           start >= (private$loc.start-shoulder) &
                                           end <=   (private$loc.end+shoulder))
@@ -130,21 +130,42 @@ public = list(
        },
 
     #------------------------------------------------------------------------
-    runMany = function(){
-           total.span <- 1 + private$loc.end - private$loc.start
-           size <- as.numeric(round(1 + (total.span/private$processCount)))
-           script <- "~/github/bigFimo/R/fimoProcess.R"
-           printf("---- starting %d processes", private$processCount)
-           for(i in seq_len(private$processCount)){
-               start <- private$loc.start + ((i-1) * size)
-               end <- start + size + 20
-               cmd <- sprintf("Rscript %s %s %s %d %d %10.8f",
-                              script,
-                              private$targetGene, private$chromosome, start, end, private$fimoThreshold)
-               printf("cmd: %s", cmd)
-               system(cmd, wait=FALSE)
-               } # for i
+       # create one binary data.frame per process, splitting regions
+       # equally among them
+    createFimoTables = function(){
+       tbl.roi <- self$get.tbl.gh.atac()
+       n <- private$processCount
+       group.size <-  nrow(tbl.roi) %/% n
+       remainder  <-  nrow(tbl.roi) %% n
+       indices <- lapply(seq_len(n), function(i) seq(from=(1 + (i-1)*group.size), length.out=group.size))
+       filenames <- list()
+       for(i in seq_len(length(indices))){
+           elements.this.file <- indices[[i]]
+           tbl.out <- tbl.roi[elements.this.file,]
+           filename <- sprintf("%s.%02d.fimoRegions-%05d.RData", private$targetGene, i, nrow(tbl.out))
+           dir <- private$targetGene
+           full.path <- file.path(dir, filename)
+           filenames[[i]] <- filename
+           save(tbl.out, file=full.path)
            }
+       private$fimoRegionsFileList <- unlist(filenames)
+       private$fimoRegionsFileList
+       },
+
+    #------------------------------------------------------------------------
+    runMany = function(){
+       script <- "~/github/bigFimo/R/fimoProcess.R"
+       printf("---- starting %d processes", private$processCount)
+       for(fimoRegionsFile in private$fimoRegionsFileList){
+           full.path <- file.path(private$targetGene, fimoRegionsFile)
+           stopifnot(file.exists(full.path))
+           cmd <- sprintf("Rscript %s %s %s %10.8f",
+                          script,
+                          private$targetGene, full.path, private$fimoThreshold)
+           printf("cmd: %s", cmd)
+           system(cmd, wait=FALSE)
+           } # for i
+       }
     ) # public
 
 ) # class BigFimo
