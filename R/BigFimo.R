@@ -53,10 +53,13 @@ public = list(
 
     #------------------------------------------------------------------------
     queryGeneHancer = function(){
-       suppressWarnings(
-          db.access.test <- try(system("/sbin/ping -c 1 khaleesi", intern=TRUE, ignore.stderr=TRUE)))
-       if(length(db.access.test) == 0)
-           stop("khaleesi postgres server unavailable")
+
+       if(grepl("hagfish", Sys.info()[["nodename"]])){
+          suppressWarnings(
+             db.access.test <- try(system("/sbin/ping -c 1 khaleesi", intern=TRUE, ignore.stderr=TRUE)))
+          if(length(db.access.test) == 0)
+              stop("khaleesi postgres server unavailable")
+          } # if hagfish
        ghdb <- GeneHancerDB()
        tbl <- retrieveEnhancersFromDatabase(ghdb, private$targetGene, tissues="all")
        if(private$gh.elite.only)
