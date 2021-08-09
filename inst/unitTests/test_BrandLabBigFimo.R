@@ -12,6 +12,7 @@ runTests <- function()
     test_includeOnlyGeneHancerIntersectingAtac()
 
     test_createFimoTables()
+    test_runMany()
 
 } # runTests
 #---------------------------------------------------------------------------------------------------
@@ -311,7 +312,7 @@ test_runMany <- function()
     if(length(files) > 0)
        unlink(file.path(targetGene, files))
 
-    processCount <- 2
+    processCount <- 3    # four will actually created, to handle 16 gh.atac regions
     fimoThreshold <- 1e-6
     gh.elite.only <- FALSE
     maxGap.between.atac.and.gh <- 5000
@@ -335,11 +336,13 @@ test_runMany <- function()
     bf$runMany()
     Sys.sleep(10)
     completed <- FALSE
+    actual.processes.needed <- length(bf$getFimoRegionsFileList())
+
     while(!completed){
-        file.count <- length(list.files(path="BACH1", pattern="^fimo.*"))
+        file.count <- length(list.files(path=targetGene, pattern="^fimo.*"))
         completed <- (file.count == processCount)
         if(!completed){
-            printf("waiting for completion: %d/%d", file.count, processCount)
+            printf("waiting for completion: %d/%d", file.count, actual.processes.needed)
             Sys.sleep(3)
         }
     } # while
@@ -347,7 +350,18 @@ test_runMany <- function()
     printf("complete %d/%d", processCount, processCount)
 
     result.files <- list.files(path=targetGene, pattern="^fimo.*")
-    checkEquals(length(result.files), processCount)
+    checkEquals(length(result.files), actual.processes.needed)
+    tbls <- list()
+    for(file in result.files){
+        tbl <- get(load(file.path(targetGene, file)))
+        tbls[[file]] <- tbl
+        }
+    tbl.fimo <- do.call(rbind, tbls)
+    tbl.fimo <- tbl.fimo[order(tbl.fimo$start, decreasing=FALSE),]
+    rownames(tbl.fimo) <- NULL
+    checkEquals(dim(tbl.fimo), c(62, 9))
+    checkTrue(min(tbl.fimo$start) >= start)
+    checkTrue(max(tbl.fimo$end) <= end)
 
 } # test_runMany
 #---------------------------------------------------------------------------------------------------
