@@ -148,6 +148,15 @@ public = list(
            filenames[[i]] <- filename
            save(tbl.out, file=full.path)
            }
+       leftover.indices <- setdiff(seq_len(nrow(tbl.roi)), unlist(indices))
+       if(length(leftover.indices) > 0){
+           filename <- sprintf("%s.%02d.fimoRegions-%05d.RData", private$targetGene, i+1, length(leftover.indices))
+           tbl.out <- tbl.roi[leftover.indices,]
+           dir <- private$targetGene
+           full.path <- file.path(dir, filename)
+           filenames[[i+1]] <- filename
+           save(tbl.out, file=full.path)
+           }
        private$fimoRegionsFileList <- unlist(filenames)
        private$fimoRegionsFileList
        },

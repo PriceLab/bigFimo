@@ -272,7 +272,33 @@ test_createFimoTables <- function()
     checkEquals(dim(tbl.gh.atac), c(16, 5))
 
     filenames.roi <- bf$createFimoTables()
+    checkEquals(length(filenames.roi), 2)
     checkTrue(all(file.exists(file.path(targetGene, filenames.roi))))
+
+       # with three processes created, at least three fimo regions files are needed
+       # with 16 rows in tbl.gh.atac, and 16/3 dividing with remainder 1, we
+       # should get 4 files
+
+
+    bf <-  BrandLabBigFimo$new(targetGene,
+                               processCount=3,
+                               fimoThreshold,
+                               gh.elite.only,
+                               maxGap.between.atac.and.gh,
+                               chrom=chrom, start=start, end=end)
+    tbl.gh <- bf$get.tbl.gh()
+    checkEquals(nrow(tbl.gh), 11)
+    checkTrue(!all(tbl.gh$elite))
+
+    bf$calculateRegionsForFimo()
+    tbl.gh.atac <- bf$get.tbl.gh.atac()
+    checkEquals(dim(tbl.gh.atac), c(16, 5))
+
+    filenames.roi <- bf$createFimoTables()
+    checkEquals(length(filenames.roi), 4)
+    checkTrue(all(file.exists(file.path(targetGene, filenames.roi))))
+    filenames.roi
+
 
 } # test_createFimoTables
 #---------------------------------------------------------------------------------------------------
@@ -280,6 +306,11 @@ test_runMany <- function()
 {
     message(sprintf("--- test_runMany"))
     targetGene <- "BACH1"
+
+    files <- list.files(path=targetGene, pattern="*.RData")
+    if(length(files) > 0)
+       unlink(file.path(targetGene, files))
+
     processCount <- 2
     fimoThreshold <- 1e-6
     gh.elite.only <- FALSE
@@ -299,7 +330,24 @@ test_runMany <- function()
                                chrom=chrom, start=start, end=end)
     bf$calculateRegionsForFimo()
     filenames.roi <- bf$createFimoTables()
+    checkTrue(all(file.exists(file.path(targetGene, filenames.roi))))
+
     bf$runMany()
+    Sys.sleep(10)
+    completed <- FALSE
+    while(!completed){
+        file.count <- length(list.files(path="BACH1", pattern="^fimo.*"))
+        completed <- (file.count == processCount)
+        if(!completed){
+            printf("waiting for completion: %d/%d", file.count, processCount)
+            Sys.sleep(3)
+        }
+    } # while
+
+    printf("complete %d/%d", processCount, processCount)
+
+    result.files <- list.files(path=targetGene, pattern="^fimo.*")
+    checkEquals(length(result.files), processCount)
 
 } # test_runMany
 #---------------------------------------------------------------------------------------------------
