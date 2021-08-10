@@ -6,7 +6,10 @@ runTests <- function()
 {
     test_ctor()
     test_specifiedRegionCtor()
+
     test_calculateRegionsForFimo_small()
+    test_calculateRegionsForFimo_small_brainFootprints()
+
     test_calculateRegionsForFimo_medium()
     test_calculateRegionsForFimo_maximal()
     test_includeOnlyGeneHancerIntersectingOC()
@@ -121,6 +124,54 @@ test_calculateRegionsForFimo_small <- function()
     checkEquals(dim(tbl.gh.oc), c(3, 5))
 
 } # test_calculateRegionsForFimo_small
+#---------------------------------------------------------------------------------------------------
+test_calculateRegionsForFimo_small_brainFootprints <- function()
+{
+    message(sprintf("--- test_calculateRegionsForFimo_small_brainFootprints"))
+
+    targetGene <- "BACH1"
+    processCount <- 2
+    fimoThreshold <- 1e-6
+    gh.elite.only <- FALSE
+    maxGap.between.oc.and.gh <- 5000
+       # this region was discovered using viz function below
+    chrom <- "chr21"
+    start <- 29195612
+    end   <- 29207473
+    start <- 29178575
+    end   <- 29214651
+
+    end - start
+
+    bf <-  BigFimo$new(targetGene,
+                       project="PriceLabBrainFootprints",
+                       processCount,
+                       fimoThreshold,
+                       gh.elite.only,
+                       maxGap.between.oc.and.gh,
+                       chrom=chrom, start=start, end=end)
+
+    tbl.gh <- bf$get.tbl.gh()
+    checkEquals(nrow(tbl.gh), 10)
+    checkTrue(!all(tbl.gh$elite))
+
+    bf$calculateRegionsForFimo()
+    tbl.gh.oc <- bf$get.tbl.gh.oc()
+    checkEquals(dim(tbl.gh.oc), c(160, 5))
+
+    if(exists("igv")){
+      track <- DataFrameQuantitativeTrack("gh.fp",
+                                          tbl.gh[, c("chrom", "start", "end", "combinedscore")],
+                                          autoscale=TRUE, color="darkgreen")
+      displayTrack(igv, track)
+      track <- DataFrameAnnotationTrack("gh.oc.fp", tbl.gh.oc, color="red", trackHeight=23)
+      displayTrack(igv, track)
+      }
+
+    return(TRUE)
+
+
+} # test_calculateRegionsForFimo_small_brainFootprints
 #---------------------------------------------------------------------------------------------------
 test_calculateRegionsForFimo_medium<- function()
 {
@@ -309,7 +360,6 @@ test_createFimoTables <- function()
     checkTrue(all(file.exists(file.path(targetGene, filenames.roi))))
     filenames.roi
 
-
 } # test_createFimoTables
 #---------------------------------------------------------------------------------------------------
 test_runMany <- function()
@@ -386,7 +436,7 @@ viz <- function()
    tbl.gh.strong <- subset(tbl.gh, elite)
    dim(tbl.gh.strong)
 
-   track <- DataFrameQuantitativeTrack("gh.strong", tbl.gh.strong[, c("chrom", "start", "end", "combinedscore")],
+   track <- DataFrameQuantitativeTrack("gh.elite", tbl.gh.strong[, c("chrom", "start", "end", "combinedscore")],
                                        autoscale=TRUE, color="brown")
    displayTrack(igv, track)
 

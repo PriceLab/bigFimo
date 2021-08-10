@@ -1,4 +1,5 @@
 library(R6)
+library(RPostgreSQL)
 library(ghdb)
 source("~/github/fimoService/batchMode/fimoBatchTools.R")
 BigFimo = R6Class("BigFimo",
@@ -124,8 +125,19 @@ public = list(
                                            start >= (private$loc.start-shoulder) &
                                            end <=   (private$loc.end+shoulder))
           } # brandLabErythropoiesis
-       if(private$project == "priceLabBrainFootprints"){
-           }
+       if(private$project == "PriceLabBrainFootprints"){
+          db <- dbConnect(PostgreSQL(), user= "trena", password="trena", dbname="brain_hint_16", host="khaleesi")
+          # browser()
+          query <- sprintf("select * from regions where chrom='%s' and start >= %d and endpos <= %d",
+                           private$chromosome, private$loc.start, private$loc.end)
+
+          tbl.oc <- dbGetQuery(db, query)
+          dbDisconnect(db)
+          if(nrow(tbl.oc) > 0){
+             tbl.oc <- tbl.oc[, c("chrom", "start", "endpos")]
+             colnames(tbl.oc) <- c("chrom", "start", "end")
+             }
+          } # PriceLabBrainFootprints
 
        gr.oc <- GRanges(tbl.oc)
 
