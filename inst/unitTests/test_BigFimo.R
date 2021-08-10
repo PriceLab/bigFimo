@@ -9,7 +9,7 @@ runTests <- function()
     test_calculateRegionsForFimo_small()
     test_calculateRegionsForFimo_medium()
     test_calculateRegionsForFimo_maximal()
-    test_includeOnlyGeneHancerIntersectingAtac()
+    test_includeOnlyGeneHancerIntersectingOC()
 
     test_createFimoTables()
     test_runMany()
@@ -24,15 +24,16 @@ test_ctor <- function()
     processCount <- 2
     fimoThreshold <- 1e-6
     gh.elite.only <- FALSE
-    maxGap.between.atac.and.gh <- 5000
+    maxGap.between.oc.and.gh <- 5000
 
        # first, without an explicit genomic region
 
     bf <-  BigFimo$new(targetGene,
+                       project="BrandLabErythropoiesis",
                        processCount,
                        fimoThreshold,
                        gh.elite.only,
-                       maxGap.between.atac.and.gh,
+                       maxGap.between.oc.and.gh,
                        chrom=NA, start=NA, end=NA)
 
     checkEquals(is(bf), "BigFimo")
@@ -47,11 +48,12 @@ test_ctor <- function()
     end <- 29300191
     gh.elite.only <- TRUE
     bf <-  BigFimo$new(targetGene,
-                               processCount,
-                               fimoThreshold,
-                               gh.elite.only,
-                               maxGap.between.atac.and.gh,
-                               chrom=chrom, start=start, end=end)
+                       project="BrandLabErythropoiesis",
+                       processCount,
+                       fimoThreshold,
+                       gh.elite.only,
+                       maxGap.between.oc.and.gh,
+                       chrom=chrom, start=start, end=end)
 
     checkEquals(is(bf), "BigFimo")
     tbl.gh <- bf$get.tbl.gh()
@@ -67,16 +69,17 @@ test_specifiedRegionCtor <- function()
     processCount <- 2
     fimoThreshold <- 1e-6
     gh.elite.only <- TRUE
-    maxGap.between.atac.and.gh <- 5000
+    maxGap.between.oc.and.gh <- 5000
     chrom <- "chr21"
     start <- 29297661
     end <- 29300191
     bf <-  BigFimo$new(targetGene,
-                               processCount,
-                               fimoThreshold,
-                               gh.elite.only,
-                               maxGap.between.atac.and.gh,
-                               chrom=chrom, start=start, end=end)
+                       project="BrandLabErythropoiesis",
+                       processCount,
+                       fimoThreshold,
+                       gh.elite.only,
+                       maxGap.between.oc.and.gh,
+                       chrom=chrom, start=start, end=end)
 
     checkEquals(is(bf), "BigFimo")
     tbl.gh <- bf$get.tbl.gh()
@@ -95,7 +98,7 @@ test_calculateRegionsForFimo_small <- function()
     processCount <- 2
     fimoThreshold <- 1e-6
     gh.elite.only <- TRUE
-    maxGap.between.atac.and.gh <- 5000
+    maxGap.between.oc.and.gh <- 5000
        # this region was discovered using viz function below
     chrom <- "chr21"
     start <- 29195612
@@ -103,18 +106,19 @@ test_calculateRegionsForFimo_small <- function()
     end - start
 
     bf <-  BigFimo$new(targetGene,
-                               processCount,
-                               fimoThreshold,
-                               gh.elite.only,
-                               maxGap.between.atac.and.gh,
-                               chrom=chrom, start=start, end=end)
+                       project="BrandLabErythropoiesis",
+                       processCount,
+                       fimoThreshold,
+                       gh.elite.only,
+                       maxGap.between.oc.and.gh,
+                       chrom=chrom, start=start, end=end)
     tbl.gh <- bf$get.tbl.gh()
     checkEquals(nrow(tbl.gh), 2)
     checkTrue(all(tbl.gh$elite))
 
     bf$calculateRegionsForFimo()
-    tbl.gh.atac <- bf$get.tbl.gh.atac()
-    checkEquals(dim(tbl.gh.atac), c(3, 5))
+    tbl.gh.oc <- bf$get.tbl.gh.oc()
+    checkEquals(dim(tbl.gh.oc), c(3, 5))
 
 } # test_calculateRegionsForFimo_small
 #---------------------------------------------------------------------------------------------------
@@ -126,7 +130,7 @@ test_calculateRegionsForFimo_medium<- function()
     processCount <- 2
     fimoThreshold <- 1e-6
     gh.elite.only <- TRUE
-    maxGap.between.atac.and.gh <- 5000
+    maxGap.between.oc.and.gh <- 5000
 
        # this region was discovered using viz function below
     chrom <- "chr21"
@@ -135,40 +139,41 @@ test_calculateRegionsForFimo_medium<- function()
     end - start
 
     bf <-  BigFimo$new(targetGene,
-                               processCount,
-                               fimoThreshold,
-                               gh.elite.only,
-                               maxGap.between.atac.and.gh,
-                               chrom=chrom, start=start, end=end)
+                       project="BrandLabErythropoiesis",
+                       processCount,
+                       fimoThreshold,
+                       gh.elite.only,
+                       maxGap.between.oc.and.gh,
+                       chrom=chrom, start=start, end=end)
     tbl.gh <- bf$get.tbl.gh()
     checkEquals(nrow(tbl.gh), 22)
     checkTrue(all(tbl.gh$elite))
 
     bf$calculateRegionsForFimo()
-    tbl.gh.atac <- bf$get.tbl.gh.atac()
-    checkEquals(dim(tbl.gh.atac), c(62, 5))
+    tbl.gh.oc <- bf$get.tbl.gh.oc()
+    checkEquals(dim(tbl.gh.oc), c(62, 5))
 
     if(exists("igv")){
       track <- DataFrameQuantitativeTrack("new.gh",
                                           tbl.gh[, c("chrom", "start", "end", "combinedscore")],
                                           autoscale=TRUE, color="darkgreen")
       displayTrack(igv, track)
-      track <- DataFrameAnnotationTrack("gh.atac", tbl.gh.atac, color="red", trackHeight=23)
+      track <- DataFrameAnnotationTrack("gh.atac", tbl.gh.oc, color="red", trackHeight=23)
       displayTrack(igv, track)
       }
 
 
 } # test_calculateRegionsForFimo_medium
 #---------------------------------------------------------------------------------------------------
-test_includeOnlyGeneHancerIntersectingAtac <- function()
+test_includeOnlyGeneHancerIntersectingOC <- function()
 {
-    message(sprintf("--- test_includeOnlyGeneHancerIntersectingAtac"))
+    message(sprintf("--- test_includeOnlyGeneHancerIntersectingOC"))
 
     targetGene <- "BACH1"
     processCount <- 2
     fimoThreshold <- 1e-6
     gh.elite.only <- TRUE
-    maxGap.between.atac.and.gh <- 0
+    maxGap.between.oc.and.gh <- 0
 
        # this region was discovered using viz function below
     chrom <- "chr21"
@@ -177,29 +182,30 @@ test_includeOnlyGeneHancerIntersectingAtac <- function()
     end - start
 
     bf <-  BigFimo$new(targetGene,
-                               processCount,
-                               fimoThreshold,
-                               gh.elite.only,
-                               maxGap.between.atac.and.gh,
-                               chrom=chrom, start=start, end=end)
+                       project="BrandLabErythropoiesis",
+                       processCount,
+                       fimoThreshold,
+                       gh.elite.only,
+                       maxGap.between.oc.and.gh,
+                       chrom=chrom, start=start, end=end)
     tbl.gh <- bf$get.tbl.gh()
     checkEquals(nrow(tbl.gh), 2)
     checkTrue(all(tbl.gh$elite))
 
     bf$calculateRegionsForFimo()
-    tbl.gh.atac <- bf$get.tbl.gh.atac()
-    checkEquals(dim(tbl.gh.atac), c(3, 5))
+    tbl.gh.oc <- bf$get.tbl.gh.oc()
+    checkEquals(dim(tbl.gh.oc), c(3, 5))
 
     if(exists("igv")){
       track <- DataFrameQuantitativeTrack("new.gh",
                                           tbl.gh[, c("chrom", "start", "end", "combinedscore")],
                                           autoscale=TRUE, color="darkgreen")
       displayTrack(igv, track)
-      track <- DataFrameAnnotationTrack("gh.atac", tbl.gh.atac, color="red", trackHeight=23)
+      track <- DataFrameAnnotationTrack("gh.oc", tbl.gh.oc, color="red", trackHeight=23)
       displayTrack(igv, track)
       }
 
-} # test_includeOnlyGeneHancerIntersectingAtac
+} # test_includeOnlyGeneHancerIntersectingOC
 #----------------------------------------------------------------------------------------------------
 # maximal in these ways:  all genehancer regions for BACH1, elite and not
 test_calculateRegionsForFimo_maximal <- function()
@@ -210,7 +216,7 @@ test_calculateRegionsForFimo_maximal <- function()
     processCount <- 2
     fimoThreshold <- 1e-6
     gh.elite.only <- FALSE
-    maxGap.between.atac.and.gh <- 0
+    maxGap.between.oc.and.gh <- 0
 
        # this region was discovered using viz function below
     chrom <- NA
@@ -218,25 +224,26 @@ test_calculateRegionsForFimo_maximal <- function()
     end   <- NA
 
     bf <-  BigFimo$new(targetGene,
-                               processCount,
-                               fimoThreshold,
-                               gh.elite.only,
-                               maxGap.between.atac.and.gh,
-                               chrom=chrom, start=start, end=end)
+                       project="BrandLabErythropoiesis",
+                       processCount,
+                       fimoThreshold,
+                       gh.elite.only,
+                       maxGap.between.oc.and.gh,
+                       chrom=chrom, start=start, end=end)
     tbl.gh <- bf$get.tbl.gh()
     checkEquals(nrow(tbl.gh), 144)
     checkTrue(!all(tbl.gh$elite))
 
     bf$calculateRegionsForFimo()
-    tbl.gh.atac <- bf$get.tbl.gh.atac()
-    checkEquals(dim(tbl.gh.atac), c(114, 5))
+    tbl.gh.oc <- bf$get.tbl.gh.oc()
+    checkEquals(dim(tbl.gh.oc), c(114, 5))
 
     if(exists("igv")){
       track <- DataFrameQuantitativeTrack("new.gh",
                                           tbl.gh[, c("chrom", "start", "end", "combinedscore")],
                                           autoscale=TRUE, color="darkgreen")
       displayTrack(igv, track)
-      track <- DataFrameAnnotationTrack("gh.atac", tbl.gh.atac, color="red", trackHeight=23)
+      track <- DataFrameAnnotationTrack("gh.oc", tbl.gh.oc, color="red", trackHeight=23)
       displayTrack(igv, track)
       }
 
@@ -250,7 +257,7 @@ test_createFimoTables <- function()
     processCount <- 2
     fimoThreshold <- 1e-6
     gh.elite.only <- FALSE
-    maxGap.between.atac.and.gh <- 5000
+    maxGap.between.oc.and.gh <- 5000
 
        # this region was discovered using viz function below
     chrom <- "chr21"
@@ -259,41 +266,43 @@ test_createFimoTables <- function()
     end - start
 
     bf <-  BigFimo$new(targetGene,
-                               processCount,
-                               fimoThreshold,
-                               gh.elite.only,
-                               maxGap.between.atac.and.gh,
-                               chrom=chrom, start=start, end=end)
+                       project="BrandLabErythropoiesis",
+                       processCount,
+                       fimoThreshold,
+                       gh.elite.only,
+                       maxGap.between.oc.and.gh,
+                       chrom=chrom, start=start, end=end)
     tbl.gh <- bf$get.tbl.gh()
     checkEquals(nrow(tbl.gh), 11)
     checkTrue(!all(tbl.gh$elite))
 
     bf$calculateRegionsForFimo()
-    tbl.gh.atac <- bf$get.tbl.gh.atac()
-    checkEquals(dim(tbl.gh.atac), c(16, 5))
+    tbl.gh.oc <- bf$get.tbl.gh.oc()
+    checkEquals(dim(tbl.gh.oc), c(16, 5))
 
     filenames.roi <- bf$createFimoTables()
     checkEquals(length(filenames.roi), 2)
     checkTrue(all(file.exists(file.path(targetGene, filenames.roi))))
 
        # with three processes created, at least three fimo regions files are needed
-       # with 16 rows in tbl.gh.atac, and 16/3 dividing with remainder 1, we
+       # with 16 rows in tbl.gh.oc, and 16/3 dividing with remainder 1, we
        # should get 4 files
 
 
     bf <-  BigFimo$new(targetGene,
-                               processCount=3,
-                               fimoThreshold,
-                               gh.elite.only,
-                               maxGap.between.atac.and.gh,
-                               chrom=chrom, start=start, end=end)
+                       project="BrandLabErythropoiesis",
+                       processCount=3,
+                       fimoThreshold,
+                       gh.elite.only,
+                       maxGap.between.oc.and.gh,
+                       chrom=chrom, start=start, end=end)
     tbl.gh <- bf$get.tbl.gh()
     checkEquals(nrow(tbl.gh), 11)
     checkTrue(!all(tbl.gh$elite))
 
     bf$calculateRegionsForFimo()
-    tbl.gh.atac <- bf$get.tbl.gh.atac()
-    checkEquals(dim(tbl.gh.atac), c(16, 5))
+    tbl.gh.oc <- bf$get.tbl.gh.oc()
+    checkEquals(dim(tbl.gh.oc), c(16, 5))
 
     filenames.roi <- bf$createFimoTables()
     checkEquals(length(filenames.roi), 4)
@@ -312,10 +321,10 @@ test_runMany <- function()
     if(length(files) > 0)
        unlink(file.path(targetGene, files))
 
-    processCount <- 3    # four will actually created, to handle 16 gh.atac regions
+    processCount <- 3    # four will actually created, to handle 16 gh.oc regions
     fimoThreshold <- 1e-6
     gh.elite.only <- FALSE
-    maxGap.between.atac.and.gh <- 5000
+    maxGap.between.oc.and.gh <- 5000
 
        # this region was discovered using viz function below
     chrom <- "chr21"
@@ -324,11 +333,12 @@ test_runMany <- function()
     end - start
 
     bf <-  BigFimo$new(targetGene,
-                               processCount,
-                               fimoThreshold,
-                               gh.elite.only,
-                               maxGap.between.atac.and.gh,
-                               chrom=chrom, start=start, end=end)
+                       project="BrandLabErythropoiesis",
+                       processCount,
+                       fimoThreshold,
+                       gh.elite.only,
+                       maxGap.between.oc.and.gh,
+                       chrom=chrom, start=start, end=end)
     bf$calculateRegionsForFimo()
     filenames.roi <- bf$createFimoTables()
     checkTrue(all(file.exists(file.path(targetGene, filenames.roi))))
