@@ -10,6 +10,8 @@ runTests <- function()
     test_calculateRegionsForFimo_small()
     test_calculateRegionsForFimo_small_brainFootprints()
 
+    test_calculateRegionsForFimo_small_brainFootprints()
+    
     test_calculateRegionsForFimo_medium()
     test_calculateRegionsForFimo_maximal()
     test_includeOnlyGeneHancerIntersectingOC()
