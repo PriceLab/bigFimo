@@ -26,7 +26,9 @@ public = list(
     initialize = function(targetGene, project, processCount, fimoThreshold,
                           gh.elite.only=TRUE, maxGap.between.oc.and.gh=5000,
                           ocExpansion=100, chrom=NA, start=NA, end=NA){
-         stopifnot(project %in% c("BrandLabErythropoiesis", "PriceLabBrainFootprints"))
+        stopifnot(project %in% c("BrandLabErythropoiesis",
+                                 "PriceLabBrainFootprints",
+                                 "MayoATAC"))
          if(!file.exists(targetGene))
              dir.create(targetGene)
          private$targetGene  <- targetGene
@@ -139,13 +141,20 @@ public = list(
              }
           } # PriceLabBrainFootprints
 
+       if(private$project == "MayoATAC"){
+          f <- "~/github/TrenaProjectAD/explore/mayo-epigenetics/atac/dbaConsensusRegionsScored.74273x30.RData"
+          stopifnot(file.exists(f))
+          tbl.atac <- get(load(f))
+          tbl.oc <- tbl.atac[, c("chrom", "start", "end", "max.score")]
+          tbl.oc <- subset(tbl.oc, max.score >= 0.001)
+          } # MayoATAC
+
        gr.oc <- GRanges(tbl.oc)
 
          # identify the oc regions which permissively "overlap" with gh,
          # where any oc region with in maxgap of a gh region is considerd
          # an overlap
-       gr.ov <- findOverlaps(gr.oc, gr.gh,
-                             maxgap=private$maxGap.between.oc.and.gh)
+       gr.ov <- findOverlaps(gr.oc, gr.gh, maxgap=private$maxGap.between.oc.and.gh)
        gr.oc.near.gh <- reduce(gr.oc[queryHits(gr.ov)])
        tbl.gh.oc <- as.data.frame(gr.oc.near.gh)
 
