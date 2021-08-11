@@ -164,11 +164,12 @@ public = list(
        },
 
     #------------------------------------------------------------------------
-       # create one binary data.frame per process, splitting regions
-       # equally among them
+       # create one binary data.frame per process, splitting regions equally among them
     createFimoTables = function(){
        tbl.roi <- self$get.tbl.gh.oc()
        n <- private$processCount
+       if(nrow(tbl.roi) < n)   # not enough regions for the number of processes?
+           n <- nrow(tbl.roi)
        group.size <-  nrow(tbl.roi) %/% n
        remainder  <-  nrow(tbl.roi) %% n
        indices <- lapply(seq_len(n), function(i) seq(from=(1 + (i-1)*group.size), length.out=group.size))

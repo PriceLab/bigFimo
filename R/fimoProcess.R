@@ -16,9 +16,13 @@ if(interactive()){
     fimo.threshold <- as.numeric(args[3])
     }
 
-tbl.regions <- get(load(fimoRegionsFile))
+printf("--- staring ~/github/bigFimo/R/fimoProcess.R")
+printf("    fimoRegionsFile: %s", fimoRegionsFile)
+printf("    file.exists: %s", file.exists(fimoRegionsFile))
+stopifnot(file.exists(fimoRegionsFile))
 
-printf("%s, fimo region count: %d  threshold: %20.10f", targetGene, nrow(tbl.regions), fimo.threshold)
+tbl.regions <- get(load(fimoRegionsFile))
+printf("     %s, fimo region count: %d  threshold: %20.10f", targetGene, nrow(tbl.regions), fimo.threshold)
 
 if(nrow(tbl.regions) > 0){
    meme.file <- "~/github/bigFimo/jaspar2018-hocomocoCoreA.meme"
