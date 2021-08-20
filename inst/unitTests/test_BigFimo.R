@@ -6,6 +6,7 @@ runTests <- function()
 {
     test_ctor()
     test_specifiedRegionCtor()
+    test_zbtb7a()
 
     test_calculateRegionsForFimo_small()
     test_calculateRegionsForFimo_small_brainFootprints()
@@ -93,6 +94,66 @@ test_specifiedRegionCtor <- function()
     checkTrue(end >= tbl.gh$start & end <= tbl.gh$end)
 
 } # test_specifiedRegionCtor
+#---------------------------------------------------------------------------------------------------
+test_zbtb7a <- function()
+{
+    targetGene <- "ZBTB7A"
+    processCount <- 2
+    fimoThreshold <- 1e-6
+    gh.elite.only <- TRUE
+    maxGap.between.oc.and.gh <- 5000
+       # this region was discovered using viz function below
+    chrom <- NA
+    start <- NA
+    end   <- NA
+
+    bf <-  BigFimo$new(targetGene,
+                       project="BrandLabErythropoiesis",
+                       processCount,
+                       fimoThreshold,
+                       gh.elite.only,
+                       maxGap.between.oc.and.gh,
+                       chrom=chrom, start=start, end=end)
+    tbl.gh <- bf$get.tbl.gh()
+    checkEquals(nrow(tbl.gh), 8)
+    checkTrue(all(tbl.gh$elite))
+
+    bf$calculateRegionsForFimo()
+    tbl.gh.oc <- bf$get.tbl.gh.oc()
+    checkEquals(dim(tbl.gh.oc), c(26, 5))
+
+    filenames.roi <- bf$createFimoTables()
+    bf$runMany()
+
+
+    Sys.sleep(10)
+    completed <- FALSE
+    actual.processes.needed <- length(bf$getFimoRegionsFileList())
+
+    while(!completed){
+        file.count <- length(list.files(path=targetGene, pattern="^fimo.*"))
+        completed <- (file.count == actual.processes.needed)
+        if(!completed){
+            printf("waiting for completion: %d/%d", file.count, actual.processes.needed)
+            Sys.sleep(3)
+        }
+    } # while
+
+    printf("complete %d/%d", actual.processes.needed, actual.processes.needed)
+
+    result.files <- list.files(path=targetGene, pattern="^fimo.*")
+    checkEquals(length(result.files), actual.processes.needed)
+    tbls <- list()
+    for(file in result.files){
+        tbl <- get(load(file.path(targetGene, file)))
+        tbls[[file]] <- tbl
+        }
+    tbl.fimo <- do.call(rbind, tbls)
+    tbl.fimo <- tbl.fimo[order(tbl.fimo$start, decreasing=FALSE),]
+    rownames(tbl.fimo) <- NULL
+    checkEquals(dim(tbl.fimo), c(487, 9))
+
+} # test_zbtb7a
 #---------------------------------------------------------------------------------------------------
 test_calculateRegionsForFimo_small <- function()
 {
@@ -394,40 +455,15 @@ test_createFimoTables <- function()
     message(sprintf("--- test_createFimoTables"))
 
     targetGene <- "BACH1"
-    processCount <- 2
     fimoThreshold <- 1e-6
     gh.elite.only <- FALSE
     maxGap.between.oc.and.gh <- 5000
 
        # this region was discovered using viz function below
     chrom <- "chr21"
-    start <- 28995780
+    start <- 28900000
     end   <- 29120251
     end - start
-
-    bf <-  BigFimo$new(targetGene,
-                       project="BrandLabErythropoiesis",
-                       processCount,
-                       fimoThreshold,
-                       gh.elite.only,
-                       maxGap.between.oc.and.gh,
-                       chrom=chrom, start=start, end=end)
-    tbl.gh <- bf$get.tbl.gh()
-    checkEquals(nrow(tbl.gh), 11)
-    checkTrue(!all(tbl.gh$elite))
-
-    bf$calculateRegionsForFimo()
-    tbl.gh.oc <- bf$get.tbl.gh.oc()
-    checkEquals(dim(tbl.gh.oc), c(16, 5))
-
-    filenames.roi <- bf$createFimoTables()
-    checkEquals(length(filenames.roi), 2)
-    checkTrue(all(file.exists(file.path(targetGene, filenames.roi))))
-
-       # with three processes created, at least three fimo regions files are needed
-       # with 16 rows in tbl.gh.oc, and 16/3 dividing with remainder 1, we
-       # should get 4 files
-
 
     bf <-  BigFimo$new(targetGene,
                        project="BrandLabErythropoiesis",
@@ -447,7 +483,27 @@ test_createFimoTables <- function()
     filenames.roi <- bf$createFimoTables()
     checkEquals(length(filenames.roi), 4)
     checkTrue(all(file.exists(file.path(targetGene, filenames.roi))))
-    filenames.roi
+
+       # with five processes created, at least six fimo regions files are needed
+
+    bf <-  BigFimo$new(targetGene,
+                       project="BrandLabErythropoiesis", 
+                       processCount=5,
+                       fimoThreshold,
+                       gh.elite.only,
+                       maxGap.between.oc.and.gh,
+                       chrom=chrom, start=start, end=end)
+    tbl.gh <- bf$get.tbl.gh()
+    checkEquals(nrow(tbl.gh), 11)
+    checkTrue(!all(tbl.gh$elite))
+
+    bf$calculateRegionsForFimo()
+    tbl.gh.oc <- bf$get.tbl.gh.oc()
+    checkEquals(dim(tbl.gh.oc), c(16, 5))
+
+    filenames.roi <- bf$createFimoTables()
+    checkEquals(length(filenames.roi), 6)
+    checkTrue(all(file.exists(file.path(targetGene, filenames.roi))))
 
 } # test_createFimoTables
 #---------------------------------------------------------------------------------------------------

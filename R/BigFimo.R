@@ -172,7 +172,11 @@ public = list(
            n <- nrow(tbl.roi)
        group.size <-  nrow(tbl.roi) %/% n
        remainder  <-  nrow(tbl.roi) %% n
-       indices <- lapply(seq_len(n), function(i) seq(from=(1 + (i-1)*group.size), length.out=group.size))
+       indices <- lapply(seq_len(n),
+                         function(i) seq(from=(1 + (i-1)*group.size), length.out=group.size))
+       if(remainder > 0)
+           indices[[private$processCount+1]] <- setdiff(seq_len(nrow(tbl.roi)), unlist(indices))
+
        filenames <- list()
        for(i in seq_len(length(indices))){
            elements.this.file <- indices[[i]]
@@ -183,17 +187,21 @@ public = list(
            filenames[[i]] <- filename
            save(tbl.out, file=full.path)
            }
-       leftover.indices <- setdiff(seq_len(nrow(tbl.roi)), unlist(indices))
-       if(length(leftover.indices) > 0){
-           filename <- sprintf("%s.%02d.fimoRegions-%05d.RData", private$targetGene, i+1, length(leftover.indices))
-           tbl.out <- tbl.roi[leftover.indices,]
-           dir <- private$targetGene
-           full.path <- file.path(dir, filename)
-           filenames[[i+1]] <- filename
-           save(tbl.out, file=full.path)
-           }
        private$fimoRegionsFileList <- unlist(filenames)
-       private$fimoRegionsFileList
+       return(private$fimoRegionsFileList)
+       # leftover.indices <- setdiff(seq_len(nrow(tbl.roi)), unlist(indices))
+       # browser()
+       # if(length(leftover.indices) > 0){
+       #     filename <- sprintf("%s.%02d.fimoRegions-%05d.RData", private$targetGene, i+1,
+       #                         length(leftover.indices))
+       #     tbl.out <- tbl.roi[leftover.indices,]
+       #     dir <- private$targetGene
+       #     full.path <- file.path(dir, filename)
+       #     filenames[[i+1]] <- filename
+       #     save(tbl.out, file=full.path)
+       #     }
+       # private$fimoRegionsFileList <- unlist(filenames)
+       # private$fimoRegionsFileList
        },
 
     #------------------------------------------------------------------------
