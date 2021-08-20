@@ -6,7 +6,7 @@ runTests <- function()
 {
     test_ctor()
     test_specifiedRegionCtor()
-    test_zbtb7a()
+    # test_zbtb7a()
 
     test_calculateRegionsForFimo_small()
     test_calculateRegionsForFimo_small_brainFootprints()
@@ -487,7 +487,7 @@ test_createFimoTables <- function()
        # with five processes created, at least six fimo regions files are needed
 
     bf <-  BigFimo$new(targetGene,
-                       project="BrandLabErythropoiesis", 
+                       project="BrandLabErythropoiesis",
                        processCount=5,
                        fimoThreshold,
                        gh.elite.only,
