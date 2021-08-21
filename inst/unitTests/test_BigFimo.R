@@ -100,9 +100,9 @@ test_specifiedRegionCtor <- function()
 test_zbtb7a <- function()
 {
     targetGene <- "ZBTB7A"
-    processCount <- 2
+    processCount <- 30
     fimoThreshold <- 1e-6
-    gh.elite.only <- TRUE
+    gh.elite.only <- FALSE
     maxGap.between.oc.and.gh <- 5000
        # this region was discovered using viz function below
     chrom <- NA
@@ -117,43 +117,51 @@ test_zbtb7a <- function()
                        maxGap.between.oc.and.gh,
                        chrom=chrom, start=start, end=end)
     tbl.gh <- bf$get.tbl.gh()
-    checkEquals(nrow(tbl.gh), 8)
-    checkTrue(all(tbl.gh$elite))
+    checkEquals(nrow(tbl.gh), 39)
+    checkTrue(!all(tbl.gh$elite))
 
     bf$calculateRegionsForFimo()
     tbl.gh.oc <- bf$get.tbl.gh.oc()
-    checkEquals(dim(tbl.gh.oc), c(26, 5))
+    checkEquals(dim(tbl.gh.oc), c(58, 5))
 
     filenames.roi <- bf$createFimoTables()
-    bf$runMany()
+        # note: exactly 2 regions described in each file, for a balanced distribution
+        # of tasks in runMany()
+    checkEquals(filenames.roi[1],  "ZBTB7A.01.fimoRegions-00002.RData")
+    checkEquals(filenames.roi[29], "ZBTB7A.29.fimoRegions-00002.RData")
 
-
-    Sys.sleep(10)
-    completed <- FALSE
     actual.processes.needed <- length(bf$getFimoRegionsFileList())
+    checkEquals(actual.processes.needed, 29)   # one fewer than requested
 
-    while(!completed){
-        file.count <- length(list.files(path=targetGene, pattern="^fimo.*"))
-        completed <- (file.count == actual.processes.needed)
-        if(!completed){
-            printf("waiting for completion: %d/%d", file.count, actual.processes.needed)
-            Sys.sleep(3)
+    runMany <- FALSE   # will need to adjust the dimensions test of tbl.fimo
+    if(runMany){
+        bf$runMany()
+        Sys.sleep(10)
+        completed <- FALSE
+
+        while(!completed){
+            file.count <- length(list.files(path=targetGene, pattern="^fimo.*"))
+            completed <- (file.count == actual.processes.needed)
+            if(!completed){
+                printf("waiting for completion: %d/%d", file.count, actual.processes.needed)
+                Sys.sleep(3)
+            }
+        } # while
+
+        printf("complete %d/%d", actual.processes.needed, actual.processes.needed)
+
+        result.files <- list.files(path=targetGene, pattern="^fimo.*")
+        checkEquals(length(result.files), actual.processes.needed)
+        tbls <- list()
+        for(file in result.files){
+           tbl <- get(load(file.path(targetGene, file)))
+           tbls[[file]] <- tbl
+           }
+        tbl.fimo <- do.call(rbind, tbls)
+        tbl.fimo <- tbl.fimo[order(tbl.fimo$start, decreasing=FALSE),]
+        rownames(tbl.fimo) <- NULL
+        checkEquals(dim(tbl.fimo), c(487, 9))
         }
-    } # while
-
-    printf("complete %d/%d", actual.processes.needed, actual.processes.needed)
-
-    result.files <- list.files(path=targetGene, pattern="^fimo.*")
-    checkEquals(length(result.files), actual.processes.needed)
-    tbls <- list()
-    for(file in result.files){
-        tbl <- get(load(file.path(targetGene, file)))
-        tbls[[file]] <- tbl
-        }
-    tbl.fimo <- do.call(rbind, tbls)
-    tbl.fimo <- tbl.fimo[order(tbl.fimo$start, decreasing=FALSE),]
-    rownames(tbl.fimo) <- NULL
-    checkEquals(dim(tbl.fimo), c(487, 9))
 
 } # test_zbtb7a
 #---------------------------------------------------------------------------------------------------
