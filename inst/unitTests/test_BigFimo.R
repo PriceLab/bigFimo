@@ -6,6 +6,8 @@ runTests <- function()
 {
     test_ctor()
     test_specifiedRegionCtor()
+    test_createIndicesToDistributeTasks()
+
     # test_zbtb7a()
 
     test_calculateRegionsForFimo_small()
@@ -16,8 +18,8 @@ runTests <- function()
     test_calculateRegionsForFimo_maximal()
     test_includeOnlyGeneHancerIntersectingOC()
 
-    test_createFimoTables()
-    test_runMany()
+    test_createFimoTables_explicitRegion()
+    #test_runMany()
 
 } # runTests
 #---------------------------------------------------------------------------------------------------
@@ -450,9 +452,9 @@ test_calculateRegionsForFimo_maximal <- function()
 
 } # test_calculateRegionsForFimo_maximal
 #---------------------------------------------------------------------------------------------------
-test_createFimoTables <- function()
+test_createFimoTables_explicitRegion <- function()
 {
-    message(sprintf("--- test_createFimoTables"))
+    message(sprintf("--- test_createFimoTables_explicitRegion"))
 
     targetGene <- "BACH1"
     fimoThreshold <- 1e-6
@@ -505,7 +507,143 @@ test_createFimoTables <- function()
     checkEquals(length(filenames.roi), 6)
     checkTrue(all(file.exists(file.path(targetGene, filenames.roi))))
 
-} # test_createFimoTables
+} # test_createFimoTables_explicitRegion
+#---------------------------------------------------------------------------------------------------
+createIndices <- function(tbl.roi, processCount)
+{
+    numberOfGroups <- processCount
+    if(nrow(tbl.roi) < numberOfGroups)   # not enough regions for the number of processes?
+        numberOfGroups <- nrow(tbl.roi)
+    remainder  <-  nrow(tbl.roi) %% numberOfGroups
+    group.size <-  nrow(tbl.roi) %/% numberOfGroups
+    if(remainder > group.size){
+       group.size <- group.size + 1
+       numberOfGroups <- nrow(tbl.roi) %/% group.size
+       remainder <- nrow(tbl.roi) %% numberOfGroups
+       }
+    indices <- lapply(seq_len(numberOfGroups),
+                      function(i) seq(from=(1 + (i-1)*group.size), length.out=group.size))
+    indices.created <- sum(unlist(lapply(indices, length)))
+    if(remainder > 0)
+       indices[[numberOfGroups+1]] <- setdiff(seq_len(nrow(tbl.roi)), unlist(indices))
+
+    indices
+
+} # createIndices
+#----------------------------------------------------------------------------------------------------
+test_createIndicesToDistributeTasks <- function()
+{
+       # create a BigFimo object, but its details do not matter.  we
+       # use it hear only to render possible a call to bf$createIndicesToDistributeTasks()
+
+    targetGene <- "BACH1"
+    fimoThreshold <- 1e-6
+    gh.elite.only <- FALSE
+    maxGap.between.oc.and.gh <- 5000
+
+    chrom <- NA
+    start <- NA
+    end   <- NA
+
+    bf <-  BigFimo$new(targetGene,
+                       project="BrandLabErythropoiesis",
+                       processCount=3,
+                       fimoThreshold,
+                       gh.elite.only,
+                       maxGap.between.oc.and.gh,
+                       chrom=chrom, start=start, end=end)
+
+   indices <- bf$createIndicesToDistributeTasks(mtcars, 5)
+   checkEquals(length(indices), 6)
+   sizes <- unlist(lapply(indices, length))
+   checkEquals(sizes, c(6,6,6,6,6,2))
+   checkEquals(sum(sizes), nrow(mtcars))
+
+   indices <- bf$createIndicesToDistributeTasks(mtcars, 6)
+   checkEquals(length(indices), 7)
+   sizes <- unlist(lapply(indices, length))
+   checkEquals(sizes, c(5, 5, 5, 5, 5, 5, 2))
+   checkEquals(sum(sizes), nrow(mtcars))
+
+   indices <- bf$createIndicesToDistributeTasks(mtcars, 9)
+   checkEquals(length(indices), 8)
+   sizes <- unlist(lapply(indices, length))
+   checkEquals(sizes, c(4, 4, 4, 4, 4, 4, 4, 4))
+   checkEquals(sum(sizes), nrow(mtcars))
+
+   indices <- bf$createIndicesToDistributeTasks(mtcars, 20)
+   sizes <- unlist(lapply(indices, length))
+   checkEquals(sum(sizes), 32)
+   checkEquals(length(indices), 16)
+
+   indices <- bf$createIndicesToDistributeTasks(mtcars, 19)
+   sizes <- unlist(lapply(indices, length))
+   checkEquals(sum(sizes), 32)
+   checkEquals(length(indices), 16)
+
+       # a 31 row table spread across 20 or fewer groups
+   indices <- bf$createIndicesToDistributeTasks(mtcars[-1,], 20)
+   sizes <- unlist(lapply(indices, length))
+   checkEquals(sum(sizes), 31)
+   checkEquals(length(indices), 16)
+
+} # test_createIndicesToDistributeTasks
+#----------------------------------------------------------------------------------------------------
+test_createFimoTables_fullGene <- function()
+{
+    message(sprintf("--- test_createFimoTables_fullGene"))
+
+    targetGene <- "ZBTB7A"
+    fimoThreshold <- 1e-6
+    gh.elite.only <- FALSE
+    maxGap.between.oc.and.gh <- 5000
+
+       # this region was discovered using viz function below
+    chrom <- NA
+    start <- NA
+    end   <- NA
+
+    bf <-  BigFimo$new(targetGene,
+                       project="BrandLabErythropoiesis",
+                       processCount=30,
+                       fimoThreshold,
+                       gh.elite.only,
+                       maxGap.between.oc.and.gh,
+                       chrom=chrom, start=start, end=end)
+    tbl.gh <- bf$get.tbl.gh()
+    checkEquals(nrow(tbl.gh), 39)
+    checkTrue(!all(tbl.gh$elite))
+
+    bf$calculateRegionsForFimo()
+    tbl.gh.oc <- bf$get.tbl.gh.oc()
+    checkEquals(dim(tbl.gh.oc), c(58, 5))
+
+    filenames.roi <- bf$createFimoTables()
+    checkEquals(length(filenames.roi), 31)
+    checkTrue(all(file.exists(file.path(targetGene, filenames.roi))))
+
+       # with five processes created, at least six fimo regions files are needed
+
+    bf <-  BigFimo$new(targetGene,
+                       project="BrandLabErythropoiesis",
+                       processCount=5,
+                       fimoThreshold,
+                       gh.elite.only,
+                       maxGap.between.oc.and.gh,
+                       chrom=chrom, start=start, end=end)
+    tbl.gh <- bf$get.tbl.gh()
+    checkEquals(nrow(tbl.gh), 11)
+    checkTrue(!all(tbl.gh$elite))
+
+    bf$calculateRegionsForFimo()
+    tbl.gh.oc <- bf$get.tbl.gh.oc()
+    checkEquals(dim(tbl.gh.oc), c(16, 5))
+
+    filenames.roi <- bf$createFimoTables()
+    checkEquals(length(filenames.roi), 6)
+    checkTrue(all(file.exists(file.path(targetGene, filenames.roi))))
+
+} # test_createFimoTables_fullGene
 #---------------------------------------------------------------------------------------------------
 test_runMany <- function()
 {

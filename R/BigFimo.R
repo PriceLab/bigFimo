@@ -164,6 +164,31 @@ public = list(
        },
 
     #------------------------------------------------------------------------
+    # we want to partition the fimo regions equally across the approximate
+    # number of suggested processes.  this function returns a list of indices
+    # each a vector. sometimes an extra process is needed, sometimes fewer
+    createIndicesToDistributeTasks = function(tbl, suggestedProcessCount){
+
+       numberOfGroups <- suggestedProcessCount
+       if(nrow(tbl) < numberOfGroups)   # not enough regions for the number of processes?
+           numberOfGroups <- nrow(tbl)
+       remainder  <-  nrow(tbl) %% numberOfGroups
+       group.size <-  nrow(tbl) %/% numberOfGroups
+       if(remainder > group.size){
+           group.size <- group.size + 1
+           numberOfGroups <- nrow(tbl) %/% group.size
+           remainder <- nrow(tbl) %% numberOfGroups
+       }
+       indices <- lapply(seq_len(numberOfGroups),
+                         function(i) seq(from=(1 + (i-1)*group.size), length.out=group.size))
+       indices.created <- sum(unlist(lapply(indices, length)))
+       if(remainder > 0)
+           indices[[numberOfGroups+1]] <- setdiff(seq_len(nrow(tbl)), unlist(indices))
+
+       indices
+       },
+
+    #------------------------------------------------------------------------
        # create one binary data.frame per process, splitting regions equally among them
     createFimoTables = function(){
        tbl.roi <- self$get.tbl.gh.oc()
