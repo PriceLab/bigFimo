@@ -270,12 +270,13 @@ test_calculateRegionsForFimo_small_mayoATAC <- function()
                        chrom=chrom, start=start, end=end)
 
     tbl.gh <- bf$get.tbl.gh()
-    checkEquals(nrow(tbl.gh), 3)
+    dim(tbl.gh)
+    checkEquals(nrow(tbl.gh), 4)
     checkTrue(!all(tbl.gh$elite))
 
     bf$calculateRegionsForFimo()
     tbl.gh.oc <- bf$get.tbl.gh.oc()
-    checkEquals(dim(tbl.gh.oc), c(3, 5))
+    checkEquals(dim(tbl.gh.oc), c(5, 5))
 
     if(exists("igv")){
       track <- DataFrameQuantitativeTrack("gh.fp",
@@ -313,12 +314,12 @@ test_calculateRegionsForFimo_wholeGene_mayoATAC <- function()
                        chrom=chrom, start=start, end=end)
 
     tbl.gh <- bf$get.tbl.gh()
-    checkEquals(nrow(tbl.gh), 37)
+    checkEquals(nrow(tbl.gh), 40)
     checkTrue(!all(tbl.gh$elite))
 
     bf$calculateRegionsForFimo()
     tbl.gh.oc <- bf$get.tbl.gh.oc()
-    checkEquals(dim(tbl.gh.oc), c(28, 5))
+    checkEquals(dim(tbl.gh.oc), c(38, 5))
 
     if(exists("igv")){
       track <- DataFrameQuantitativeTrack("gh.fp",
@@ -357,7 +358,7 @@ test_calculateRegionsForFimo_medium<- function()
                        maxGap.between.oc.and.gh,
                        chrom=chrom, start=start, end=end)
     tbl.gh <- bf$get.tbl.gh()
-    checkEquals(nrow(tbl.gh), 22)
+    checkEquals(nrow(tbl.gh), 23)
     checkTrue(all(tbl.gh$elite))
 
     bf$calculateRegionsForFimo()
@@ -442,12 +443,12 @@ test_calculateRegionsForFimo_maximal <- function()
                        maxGap.between.oc.and.gh,
                        chrom=chrom, start=start, end=end)
     tbl.gh <- bf$get.tbl.gh()
-    checkEquals(nrow(tbl.gh), 144)
+    checkEquals(nrow(tbl.gh), 142)
     checkTrue(!all(tbl.gh$elite))
 
     bf$calculateRegionsForFimo()
     tbl.gh.oc <- bf$get.tbl.gh.oc()
-    checkEquals(dim(tbl.gh.oc), c(114, 5))
+    checkEquals(dim(tbl.gh.oc), c(110, 5))
 
     if(exists("igv")){
       track <- DataFrameQuantitativeTrack("new.gh",
@@ -483,15 +484,15 @@ test_createFimoTables_explicitRegion <- function()
                        maxGap.between.oc.and.gh,
                        chrom=chrom, start=start, end=end)
     tbl.gh <- bf$get.tbl.gh()
-    checkEquals(nrow(tbl.gh), 11)
+    checkEquals(nrow(tbl.gh), 9)
     checkTrue(!all(tbl.gh$elite))
 
     bf$calculateRegionsForFimo()
     tbl.gh.oc <- bf$get.tbl.gh.oc()
-    checkEquals(dim(tbl.gh.oc), c(16, 5))
+    checkEquals(dim(tbl.gh.oc), c(12, 5))
 
     filenames.roi <- bf$createFimoTables()
-    checkEquals(length(filenames.roi), 4)
+    checkEquals(length(filenames.roi), 3)
     checkTrue(all(file.exists(file.path(targetGene, filenames.roi))))
 
        # with five processes created, at least six fimo regions files are needed
@@ -504,12 +505,12 @@ test_createFimoTables_explicitRegion <- function()
                        maxGap.between.oc.and.gh,
                        chrom=chrom, start=start, end=end)
     tbl.gh <- bf$get.tbl.gh()
-    checkEquals(nrow(tbl.gh), 11)
+    checkEquals(nrow(tbl.gh), 9)
     checkTrue(!all(tbl.gh$elite))
 
     bf$calculateRegionsForFimo()
     tbl.gh.oc <- bf$get.tbl.gh.oc()
-    checkEquals(dim(tbl.gh.oc), c(16, 5))
+    checkEquals(dim(tbl.gh.oc), c(12, 5))
 
     filenames.roi <- bf$createFimoTables()
     checkEquals(length(filenames.roi), 6)

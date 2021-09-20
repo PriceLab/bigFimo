@@ -142,11 +142,11 @@ public = list(
           } # PriceLabBrainFootprints
 
        if(private$project == "MayoATAC"){
-          f <- "~/github/TrenaProjectAD/explore/mayo-epigenetics/atac/dbaConsensusRegionsScored.74273x30.RData"
+          # f <- "~/github/TrenaProjectAD/explore/mayo-epigenetics/atac/dbaConsensusRegionsScored.74273x30.RData"
+          f <- "~/github/TrenaProjectAD/explore/mayo-epigenetics/atac/mayoAllPeaks.merged.96064x4.RData"
           stopifnot(file.exists(f))
           tbl.atac <- get(load(f))
-          tbl.oc <- tbl.atac[, c("chrom", "start", "end", "max.score")]
-          tbl.oc <- subset(tbl.oc, max.score >= 0.001)
+          tbl.oc <- tbl.atac[, c("chrom", "start", "end")]
           } # MayoATAC
 
        gr.oc <- GRanges(tbl.oc)
