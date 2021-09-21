@@ -10,7 +10,7 @@ runTests <- function()
     # test_zbtb7a()
 
     test_calculateRegionsForFimo_small()
-    test_calculateRegionsForFimo_small_brainFootprints()
+    #test_calculateRegionsForFimo_small_brainFootprints()
     test_calculateRegionsForFimo_small_mayoATAC()
     test_calculateRegionsForFimo_wholeGene_mayoATAC()
     test_calculateRegionsForFimo_medium()
@@ -39,6 +39,19 @@ human.brain.tcx.boca.oc <- function()
     invisible(tbl.oc)
 
 } # human.brain.tcx.boca.oc
+#---------------------------------------------------------------------------------------------------
+human.brain.consensus.boca.oc <- function()
+{
+    dir <- "~/github/TrenaProjectAD/inst/extdata/genomicRegions"
+    f <- "boca-hg38-consensus-ATAC.RData"
+    full.path <- file.path(dir, f)
+    checkTrue(file.exists(full.path))
+    tbl.oc <- get(load(full.path))
+    dim(tbl.oc)   # 125430
+
+    invisible(tbl.oc)
+
+} # human.brain.consensus.boca.oc
 #---------------------------------------------------------------------------------------------------
 human.brain.mayo.oc <- function()
 {
@@ -90,7 +103,7 @@ mouse.brain.encode.oc <- function()
     size <- round(sum(width(GRanges(tbl.oc)))/1000000, digits=2)
     printf("mouse brain oc %s of %5.2fM bases, %d rows", filename, size, nrow(tbl.oc))
     invisible(tbl.oc)
-    
+
 } # mouse.brain.encode.oc
 #----------------------------------------------------------------------------------------------------
 test_getOpenChromatin <- function()
@@ -98,9 +111,9 @@ test_getOpenChromatin <- function()
     message(sprintf("--- test_getOpenChromatin"))
 
        #----------------------------------------
-       # temporal cortex atac-seq from boca
+       # consensus hg38 atac-seq from boca
        #----------------------------------------
-    tbl.oc <- human.brain.tcx.boca.oc()
+    tbl.oc <- human.brain.consensus.boca.oc()
     checkTrue(all(colnames(tbl.oc)[1:3] == c("chrom", "start", "end")))
     checkTrue(class(tbl.oc[, "chrom"]) == "character")
     head(tbl.oc)
@@ -275,27 +288,26 @@ test_calculateRegionsForFimo_small <- function()
                        fimoThreshold=1e-6,
                        gh.elite.only=TRUE,
                        maxGap.between.oc.and.gh=5000)
-                       #chrom=chrom, start=start, end=end)
     tbl.gh <- bf$get.tbl.gh()
-    checkEquals(nrow(tbl.gh), 10)
+    checkEquals(nrow(tbl.gh), 32)
     checkTrue(all(tbl.gh$elite))
 
     bf$calculateRegionsForFimo()
     tbl.gh.oc <- bf$get.tbl.gh.oc()
-    checkEquals(dim(tbl.gh.oc), c(43, 5))
+    checkEquals(dim(tbl.gh.oc), c(73, 5))
 
 } # test_calculateRegionsForFimo_small
 #---------------------------------------------------------------------------------------------------
-test_calculateRegionsForFimo_small_mayoATAC <- function()
+# compare the three hg38 oc sources:
+#   human.erythropoiesis.brand.oc()
+test_calculateRegionsForFimo_small_PTK2B <- function()
 {
-    message(sprintf("--- test_calculateRegionsForFimo_small_mayoATAC"))
+    message(sprintf("--- test_calculateRegionsForFimo_small_PTK2B"))
 
     targetGene <- "PTK2B"
     chrom <- "chr8"
     start <- 27320895
     end   <- 27330083
-    #start <- 27310895
-    #end   <- 27340083
 
     bf <-  BigFimo$new(targetGene,
                        tbl.oc=human.erythropoiesis.brand.oc(),
@@ -316,6 +328,7 @@ test_calculateRegionsForFimo_small_mayoATAC <- function()
     checkEquals(dim(tbl.gh.oc), c(6, 5))
 
     if(exists("igv")){
+      displayGenomicRegion(igv, "chr8:27,309,174-27,347,212")
       track <- DataFrameQuantitativeTrack("gh.fp",
                                           tbl.gh[, c("chrom", "start", "end", "combinedscore")],
                                           autoscale=TRUE, color="darkgreen")
@@ -326,9 +339,72 @@ test_calculateRegionsForFimo_small_mayoATAC <- function()
 
     return(TRUE)
 
-
-} # test_calculateRegionsForFimo_small_mayoATAC
+} # test_calculateRegionsForFimo_small_PTK2B
 #---------------------------------------------------------------------------------------------------
+# we currently have four human sources, three brain, one erythropoiesis.  how do they compare?
+test_calculateRegionsForFimo_allHumanSources_NDUFS2 <- function()
+{
+   message(sprintf("--- test_calculateRegionsForFimo_allHumanSources_NDUFS2"))
+   targetGene <- "NDUFS2"
+   targetGene <- "BACH1"
+   targetGene <- "PPOX"
+   fimo.threshold <- 1e-5
+
+   bf <-  BigFimo$new(targetGene,
+                      tbl.oc=human.brain.mayo.oc(),
+                      processCount=1,
+                      fimoThreshold=fimo.threshold,
+                      gh.elite.only=FALSE,
+                      maxGap.between.oc.and.gh=5000,
+                      ocExpansion=0)
+   bf$calculateRegionsForFimo()
+   tbl.regions.mayo <- bf$get.tbl.gh.oc()
+   dim(tbl.regions.mayo)   # 17 5
+
+   bf <-  BigFimo$new(targetGene,
+                      tbl.oc=human.brain.consensus.boca.oc(),
+                      processCount=1,
+                      fimoThreshold=fimo.threshold,
+                      gh.elite.only=FALSE,
+                      maxGap.between.oc.and.gh=5000,
+                      ocExpansion=0)
+   bf$calculateRegionsForFimo()
+   tbl.regions.boca <- bf$get.tbl.gh.oc()
+   dim(tbl.regions.boca)  # 19 5
+
+   bf <-  BigFimo$new(targetGene,
+                      tbl.oc=human.erythropoiesis.brand.oc(),
+                      processCount=1,
+                      fimoThreshold=fimo.threshold,
+                      gh.elite.only=FALSE,
+                      maxGap.between.oc.and.gh=5000,
+                      ocExpansion=0)
+   bf$calculateRegionsForFimo()
+   tbl.regions.brand <- bf$get.tbl.gh.oc()
+   nrow(tbl.regions.brand)   # 53
+
+   tbl.gh <- bf$get.tbl.gh()
+
+   if(exists("igv")){
+     showGenomicRegion(igv, targetGene)
+     zoomOut(igv)
+     zoomOut(igv)
+     track <- DataFrameQuantitativeTrack("gh",
+                                         tbl.gh[, c("chrom", "start", "end", "combinedscore")],
+                                         autoscale=TRUE, color="darkgreen")
+     displayTrack(igv, track)
+     track <- DataFrameAnnotationTrack("mayo", tbl.regions.mayo, color="random")
+     displayTrack(igv, track)
+     track <- DataFrameAnnotationTrack("boca", tbl.regions.boca, color="random")
+     displayTrack(igv, track)
+     track <- DataFrameAnnotationTrack("brand", tbl.regions.brand, color="random")
+     displayTrack(igv, track)
+     }
+
+    return(TRUE)
+
+} # test_calculateRegionsForFimo_allHumanSources_NDUFS2
+#----------------------------------------------------------------------------------------------------
 test_calculateRegionsForFimo_wholeGene_mayoATAC <- function()
 {
     message(sprintf("--- test_calculateRegionsForFimo_wholeGene_mayoATAC"))
@@ -338,17 +414,13 @@ test_calculateRegionsForFimo_wholeGene_mayoATAC <- function()
     fimoThreshold <- 1e-4
     gh.elite.only <- FALSE
     maxGap.between.oc.and.gh <- 5000
-    chrom <- NA
-    start <- NA
-    end   <- NA
 
     bf <-  BigFimo$new(targetGene,
-                       project="MayoATAC",
+                       tbl.oc=human.erythropoiesis.brand.oc(),
                        processCount,
                        fimoThreshold,
                        gh.elite.only,
-                       maxGap.between.oc.and.gh,
-                       chrom=chrom, start=start, end=end)
+                       maxGap.between.oc.and.gh)
 
     tbl.gh <- bf$get.tbl.gh()
     checkEquals(nrow(tbl.gh), 40)
@@ -356,7 +428,7 @@ test_calculateRegionsForFimo_wholeGene_mayoATAC <- function()
 
     bf$calculateRegionsForFimo()
     tbl.gh.oc <- bf$get.tbl.gh.oc()
-    checkEquals(dim(tbl.gh.oc), c(38, 5))
+    checkEquals(dim(tbl.gh.oc), c(81, 5))
 
     if(exists("igv")){
       track <- DataFrameQuantitativeTrack("gh.fp",
@@ -388,7 +460,7 @@ test_calculateRegionsForFimo_medium<- function()
     end - start
 
     bf <-  BigFimo$new(targetGene,
-                       project="BrandLabErythropoiesis",
+                       tbl.oc=human.erythropoiesis.brand.oc(),
                        processCount,
                        fimoThreshold,
                        gh.elite.only,
@@ -400,7 +472,7 @@ test_calculateRegionsForFimo_medium<- function()
 
     bf$calculateRegionsForFimo()
     tbl.gh.oc <- bf$get.tbl.gh.oc()
-    checkEquals(dim(tbl.gh.oc), c(62, 5))
+    checkEquals(dim(tbl.gh.oc), c(56, 5))
 
     if(exists("igv")){
       track <- DataFrameQuantitativeTrack("new.gh",
@@ -431,7 +503,7 @@ test_includeOnlyGeneHancerIntersectingOC <- function()
     end - start
 
     bf <-  BigFimo$new(targetGene,
-                       project="BrandLabErythropoiesis",
+                       tbl.oc=human.erythropoiesis.brand.oc(),
                        processCount,
                        fimoThreshold,
                        gh.elite.only,
@@ -467,25 +539,19 @@ test_calculateRegionsForFimo_maximal <- function()
     gh.elite.only <- FALSE
     maxGap.between.oc.and.gh <- 0
 
-       # this region was discovered using viz function below
-    chrom <- NA
-    start <- NA
-    end   <- NA
-
     bf <-  BigFimo$new(targetGene,
-                       project="BrandLabErythropoiesis",
+                       tbl.oc=human.erythropoiesis.brand.oc(),
                        processCount,
                        fimoThreshold,
                        gh.elite.only,
-                       maxGap.between.oc.and.gh,
-                       chrom=chrom, start=start, end=end)
+                       maxGap.between.oc.and.gh)
     tbl.gh <- bf$get.tbl.gh()
     checkEquals(nrow(tbl.gh), 142)
     checkTrue(!all(tbl.gh$elite))
 
     bf$calculateRegionsForFimo()
     tbl.gh.oc <- bf$get.tbl.gh.oc()
-    checkEquals(dim(tbl.gh.oc), c(110, 5))
+    checkEquals(dim(tbl.gh.oc), c(102, 5))
 
     if(exists("igv")){
       track <- DataFrameQuantitativeTrack("new.gh",
@@ -514,7 +580,7 @@ test_createFimoTables_explicitRegion <- function()
     end - start
 
     bf <-  BigFimo$new(targetGene,
-                       project="BrandLabErythropoiesis",
+                       tbl.oc=human.erythropoiesis.brand.oc(),
                        processCount=3,
                        fimoThreshold,
                        gh.elite.only,
@@ -526,16 +592,16 @@ test_createFimoTables_explicitRegion <- function()
 
     bf$calculateRegionsForFimo()
     tbl.gh.oc <- bf$get.tbl.gh.oc()
-    checkEquals(dim(tbl.gh.oc), c(12, 5))
+    checkEquals(dim(tbl.gh.oc), c(11, 5))
 
     filenames.roi <- bf$createFimoTables()
-    checkEquals(length(filenames.roi), 3)
+    checkEquals(length(filenames.roi), 4)
     checkTrue(all(file.exists(file.path(targetGene, filenames.roi))))
 
        # with five processes created, at least six fimo regions files are needed
 
     bf <-  BigFimo$new(targetGene,
-                       project="BrandLabErythropoiesis",
+                       tbl.oc=human.erythropoiesis.brand.oc(),
                        processCount=5,
                        fimoThreshold,
                        gh.elite.only,
@@ -547,7 +613,7 @@ test_createFimoTables_explicitRegion <- function()
 
     bf$calculateRegionsForFimo()
     tbl.gh.oc <- bf$get.tbl.gh.oc()
-    checkEquals(dim(tbl.gh.oc), c(12, 5))
+    checkEquals(dim(tbl.gh.oc), c(11, 5))
 
     filenames.roi <- bf$createFimoTables()
     checkEquals(length(filenames.roi), 6)
@@ -592,7 +658,7 @@ test_createIndicesToDistributeTasks <- function()
     end   <- NA
 
     bf <-  BigFimo$new(targetGene,
-                       project="BrandLabErythropoiesis",
+                       tbl.oc=human.erythropoiesis.brand.oc(),
                        processCount=3,
                        fimoThreshold,
                        gh.elite.only,
@@ -650,7 +716,7 @@ test_createFimoTables_fullGene <- function()
     end   <- NA
 
     bf <-  BigFimo$new(targetGene,
-                       project="BrandLabErythropoiesis",
+                       tbl.oc=human.erythropoiesis.brand.oc(),
                        processCount=30,
                        fimoThreshold,
                        gh.elite.only,
@@ -671,7 +737,7 @@ test_createFimoTables_fullGene <- function()
        # with five processes created, at least six fimo regions files are needed
 
     bf <-  BigFimo$new(targetGene,
-                       project="BrandLabErythropoiesis",
+                       tbl.oc=human.erythropoiesis.brand.oc(),
                        processCount=5,
                        fimoThreshold,
                        gh.elite.only,
@@ -712,7 +778,7 @@ test_runMany <- function()
     end - start
 
     bf <-  BigFimo$new(targetGene,
-                       project="BrandLabErythropoiesis",
+                       tbl.oc=human.erythropoiesis.brand.oc(),
                        processCount,
                        fimoThreshold,
                        gh.elite.only,
@@ -748,7 +814,7 @@ test_runMany <- function()
     tbl.fimo <- do.call(rbind, tbls)
     tbl.fimo <- tbl.fimo[order(tbl.fimo$start, decreasing=FALSE),]
     rownames(tbl.fimo) <- NULL
-    checkEquals(dim(tbl.fimo), c(62, 9))
+    checkEquals(dim(tbl.fimo), c(78, 9))
     checkTrue(min(tbl.fimo$start) >= start)
     checkTrue(max(tbl.fimo$end) <= end)
 

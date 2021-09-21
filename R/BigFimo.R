@@ -102,7 +102,7 @@ public = list(
     #------------------------------------------------------------------------
     # find the overlap of oc with fimo - but very generously
     # any open chromatin within < maxGap.between.oc.and.gh (often 5000)
-    # will be included.   
+    # will be included.
     calculateRegionsForFimo = function(){
        tbl.gh <- private$tbl.gh   # convenience
        private$regionSize <- with(tbl.gh, max(end) - min(start))
