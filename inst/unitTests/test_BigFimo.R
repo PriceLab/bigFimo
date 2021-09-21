@@ -11,7 +11,7 @@ runTests <- function()
 
     test_calculateRegionsForFimo_small()
     #test_calculateRegionsForFimo_small_brainFootprints()
-    test_calculateRegionsForFimo_small_mayoATAC()
+    test_calculateRegionsForFimo_small_PTK2B()
     test_calculateRegionsForFimo_wholeGene_mayoATAC()
     test_calculateRegionsForFimo_medium()
     test_calculateRegionsForFimo_maximal()
