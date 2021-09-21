@@ -1,0 +1,18 @@
+Package: BigFimo
+Type: Package
+Title: BigFimo
+Version: 1.0.2
+Date: 2021-09-20
+Author: Paul Shannon
+Maintainer: Paul Shannon <paul.thurmond.shannon@gmail.com>
+Depends: R (>= 3.5.0), R6
+Suggests: RUnit, knitr, rmarkdown
+Description: an R6 class for running multiple FIMO processes
+License: apache
+LazyLoad: yes
+NeedsCompilation: no
+VignetteBuilder:
+  knitr
+Encoding: UTF-8
+RoxygenNote: 7.1.1
+          

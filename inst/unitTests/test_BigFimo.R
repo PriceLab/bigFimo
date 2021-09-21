@@ -5,7 +5,6 @@ source("~/github/bigFimo/R/BigFimo.R")
 runTests <- function()
 {
     test_ctor()
-    test_specifiedRegionCtor()
     test_createIndicesToDistributeTasks()
 
     # test_zbtb7a()
@@ -23,24 +22,161 @@ runTests <- function()
 
 } # runTests
 #---------------------------------------------------------------------------------------------------
+human.brain.tcx.boca.oc <- function()
+{
+    dir <- "~/github/TrenaProjectAD/inst/extdata/genomicRegions"
+    f <- "tbl.boca.RData"
+    full.path <- file.path(dir, f)
+    checkTrue(file.exists(full.path))
+    tbl.oc <- get(load(full.path))
+    tbl.ctx <- subset(tbl.oc, tissue %in% c("DLPFC", "VLPFC"))
+    gr.ctx <- reduce(GRanges(tbl.ctx))
+    tbl.oc <- as.data.frame(gr.ctx)
+    colnames(tbl.oc)[1] <- "chrom"
+    tbl.oc$chrom <- as.character(tbl.oc$chrom)
+    dim(tbl.oc)   # 125430
+
+    invisible(tbl.oc)
+
+} # human.brain.tcx.boca.oc
+#---------------------------------------------------------------------------------------------------
+human.brain.mayo.oc <- function()
+{
+   dir <- "~/github/TrenaProjectAD/inst/extdata/genomicRegions"
+   file <- "mayoAllPeaks.merged.96064x4.RData"
+   full.path <- file.path(dir, file)
+   tbl.atac <- get(load(full.path))
+   tbl.oc <- tbl.atac[, c("chrom", "start", "end")]
+
+   invisible(tbl.oc)
+
+} # human.brain.mayo.oc
+#---------------------------------------------------------------------------------------------------
+human.erythropoiesis.brand.oc <- function()
+{
+    dir <- "~/github/TrenaProjectErythropoiesis/inst/extdata/genomicRegions"
+    full.path <- file.path(dir, "tbl.atacMerged.RData")
+    checkTrue(file.exists(full.path))
+    tbl.oc <- get(load(full.path))
+
+    invisible(tbl.oc)
+
+} # human.erythropoiesis.brand.oc
+#---------------------------------------------------------------------------------------------------
+mouse.liver.encode.oc <- function()
+{
+    data.dir <- "~/github/TrenaProjectMouseLC/inst/extdata/genomicRegions"
+    filename <- "dnase-liver-8weeks-ENCSR836BNL.RData"
+    full.path <- file.path(data.dir, filename)
+    checkTrue(file.exists(full.path))
+    tbl.oc <- get(load(full.path))
+
+    size <- round(sum(width(GRanges(tbl.oc)))/1000000, digits=2)
+    printf("mouse liver oc %s of %5.2fM bases, %d rows", filename, size, nrow(tbl.oc))
+
+    invisible(tbl.oc)
+
+} # mouse.liver.encode.oc
+#---------------------------------------------------------------------------------------------------
+mouse.brain.encode.oc <- function()
+{
+    data.dir <- "~/github/TrenaProjectMouseBrain/inst/extdata/genomicRegions"
+    filename <- "brainTissueMaleAdult8weeks-ENCSR000COF.RData"
+    full.path <- file.path(data.dir, filename)
+
+    checkTrue(file.exists(full.path))
+    tbl.oc <- get(load(full.path))
+    dim(tbl.oc)
+    size <- round(sum(width(GRanges(tbl.oc)))/1000000, digits=2)
+    printf("mouse brain oc %s of %5.2fM bases, %d rows", filename, size, nrow(tbl.oc))
+    invisible(tbl.oc)
+    
+} # mouse.brain.encode.oc
+#----------------------------------------------------------------------------------------------------
+test_getOpenChromatin <- function()
+{
+    message(sprintf("--- test_getOpenChromatin"))
+
+       #----------------------------------------
+       # temporal cortex atac-seq from boca
+       #----------------------------------------
+    tbl.oc <- human.brain.tcx.boca.oc()
+    checkTrue(all(colnames(tbl.oc)[1:3] == c("chrom", "start", "end")))
+    checkTrue(class(tbl.oc[, "chrom"]) == "character")
+    head(tbl.oc)
+    checkEquals(length(unique(tbl.oc$chrom)), 24)
+    checkTrue(all(grepl("chr", unique(tbl.oc$chrom))))
+    checkEquals(nrow(tbl.oc), 125430)
+
+       #----------------------------------------
+       # all mayo ATAC.seq
+       #----------------------------------------
+    tbl.oc <- human.brain.mayo.oc()
+    checkTrue(all(colnames(tbl.oc)[1:3] == c("chrom", "start", "end")))
+    checkTrue(class(tbl.oc[, "chrom"]) == "character")
+    head(tbl.oc)
+    checkEquals(length(unique(tbl.oc$chrom)), 25)
+    checkTrue(all(grepl("chr", unique(tbl.oc$chrom))))
+    checkEquals(nrow(tbl.oc), 96064)
+
+       #----------------------------------------
+       # brand lab merged erythropoeis
+       #----------------------------------------
+    tbl.oc <- human.erythropoiesis.brand.oc()
+    checkTrue(all(colnames(tbl.oc)[1:3] == c("chrom", "start", "end")))
+    checkTrue(class(tbl.oc[, "chrom"]) == "character")
+    head(tbl.oc)
+    checkEquals(length(unique(tbl.oc$chrom)), 24)
+    checkTrue(all(grepl("chr", unique(tbl.oc$chrom))))
+    checkEquals(nrow(tbl.oc), 956694)
+
+       #----------------------------------------
+       # encode mouse brain
+       #----------------------------------------
+
+    tbl.oc <- mouse.brain.encode.oc()
+    checkTrue(all(colnames(tbl.oc)[1:3] == c("chrom", "start", "end")))
+    checkTrue(class(tbl.oc[, "chrom"]) == "character")
+    checkEquals(length(unique(tbl.oc$chrom)), 21)   # 1-19, X, Y
+    checkTrue(all(grepl("chr", unique(tbl.oc$chrom))))
+    checkEquals(nrow(tbl.oc), 258549)
+
+       #----------------------------------------
+       # encode mouse liver
+       #----------------------------------------
+
+    tbl.oc <- mouse.liver.encode.oc()
+    checkTrue(all(colnames(tbl.oc)[1:3] == c("chrom", "start", "end")))
+    checkTrue(class(tbl.oc[, "chrom"]) == "character")
+    checkEquals(length(unique(tbl.oc$chrom)), 21)   # 1-19, X, Y
+    checkTrue(all(grepl("chr", unique(tbl.oc$chrom))))
+    checkEquals(nrow(tbl.oc), 499693)
+
+} # test_getOpenChromatin
+#---------------------------------------------------------------------------------------------------
 test_ctor <- function()
 {
     message(sprintf("--- test_ctor"))
 
-    targetGene <- "BACH1"
     processCount <- 2
     fimoThreshold <- 1e-6
     gh.elite.only <- FALSE
     maxGap.between.oc.and.gh <- 5000
 
-       # first, without an explicit genomic region
+        #------------------------------------------------------------
+        # BrandLab erythropoiesis merged (all condition) ATAC-seq
+        # regions, thus w/o scores
+        #------------------------------------------------------------
 
-    bf <-  BigFimo$new(targetGene,
-                       project="BrandLabErythropoiesis",
-                       processCount,
-                       fimoThreshold,
-                       gh.elite.only,
-                       maxGap.between.oc.and.gh,
+        # first, without an explicit genomic region
+        # BigFimo intersect genehancer with tbl.oc
+    targetGene <- "BACH1"
+    bf <-  BigFimo$new(targetGene=targetGene,
+                       tbl.oc=human.erythropoiesis.brand.oc(),
+                       processCount=2,
+                       fimoThreshold=1e-6,
+                       gh.elite.only=FALSE,
+                       maxGap.between.oc.and.gh=5000,
                        chrom=NA, start=NA, end=NA)
 
     checkEquals(is(bf), "BigFimo")
@@ -54,12 +190,12 @@ test_ctor <- function()
     start <- 29297661
     end <- 29300191
     gh.elite.only <- TRUE
-    bf <-  BigFimo$new(targetGene,
-                       project="BrandLabErythropoiesis",
-                       processCount,
-                       fimoThreshold,
-                       gh.elite.only,
-                       maxGap.between.oc.and.gh,
+    bf <-  BigFimo$new(targetGene=targetGene,
+                       tbl.oc=human.erythropoiesis.brand.oc(),
+                       processCount=2,
+                       fimoThreshold=1e-4,
+                       gh.elite.only=TRUE,
+                       maxGap.between.oc.and.gh=100,
                        chrom=chrom, start=start, end=end)
 
     checkEquals(is(bf), "BigFimo")
@@ -68,70 +204,33 @@ test_ctor <- function()
 
 } # test_ctor
 #---------------------------------------------------------------------------------------------------
-test_specifiedRegionCtor <- function()
-{
-    message(sprintf("--- test_specifiedRegionCtor"))
-
-    targetGene <- "BACH1"
-    processCount <- 2
-    fimoThreshold <- 1e-6
-    gh.elite.only <- TRUE
-    maxGap.between.oc.and.gh <- 5000
-    chrom <- "chr21"
-    start <- 29297661
-    end <- 29300191
-    bf <-  BigFimo$new(targetGene,
-                       project="BrandLabErythropoiesis",
-                       processCount,
-                       fimoThreshold,
-                       gh.elite.only,
-                       maxGap.between.oc.and.gh,
-                       chrom=chrom, start=start, end=end)
-
-    checkEquals(is(bf), "BigFimo")
-    tbl.gh <- bf$get.tbl.gh()
-    checkEquals(nrow(tbl.gh), 1)
-    checkTrue(tbl.gh$elite)
-    checkTrue(start >= tbl.gh$start & start <= tbl.gh$end)
-    checkTrue(end >= tbl.gh$start & end <= tbl.gh$end)
-
-} # test_specifiedRegionCtor
-#---------------------------------------------------------------------------------------------------
 test_zbtb7a <- function()
 {
     targetGene <- "ZBTB7A"
-    processCount <- 30
-    fimoThreshold <- 1e-6
-    gh.elite.only <- FALSE
-    maxGap.between.oc.and.gh <- 5000
-       # this region was discovered using viz function below
-    chrom <- NA
-    start <- NA
-    end   <- NA
-
     bf <-  BigFimo$new(targetGene,
-                       project="BrandLabErythropoiesis",
-                       processCount,
-                       fimoThreshold,
-                       gh.elite.only,
-                       maxGap.between.oc.and.gh,
-                       chrom=chrom, start=start, end=end)
+                       tbl.oc=human.erythropoiesis.brand.oc(),
+                       processCount=30,
+                       fimoThreshold=1e-6,
+                       gh.elite.only=FALSE,
+                       maxGap.between.oc.and.gh=5000,
+                       chrom=NA, start=NA, end=NA)
     tbl.gh <- bf$get.tbl.gh()
-    checkEquals(nrow(tbl.gh), 39)
+    checkEquals(nrow(tbl.gh), 42)
     checkTrue(!all(tbl.gh$elite))
 
     bf$calculateRegionsForFimo()
     tbl.gh.oc <- bf$get.tbl.gh.oc()
-    checkEquals(dim(tbl.gh.oc), c(58, 5))
+    checkTrue(nrow(tbl.gh.oc) > 70)
 
     filenames.roi <- bf$createFimoTables()
+    checkEquals(length(filenames.roi), 25)
         # note: exactly 2 regions described in each file, for a balanced distribution
         # of tasks in runMany()
-    checkEquals(filenames.roi[1],  "ZBTB7A.01.fimoRegions-00002.RData")
-    checkEquals(filenames.roi[29], "ZBTB7A.29.fimoRegions-00002.RData")
+    checkEquals(filenames.roi[1],  "ZBTB7A.01.fimoRegions-00003.RData")
+    checkEquals(filenames.roi[25], "ZBTB7A.25.fimoRegions-00003.RData")
 
     actual.processes.needed <- length(bf$getFimoRegionsFileList())
-    checkEquals(actual.processes.needed, 29)   # one fewer than requested
+    checkEquals(actual.processes.needed, 25)   # one fewer than requested
 
     runMany <- FALSE   # will need to adjust the dimensions test of tbl.fimo
     if(runMany){
@@ -170,103 +269,40 @@ test_calculateRegionsForFimo_small <- function()
     message(sprintf("--- test_calculateRegionsForFimo_small"))
 
     targetGene <- "BACH1"
-    processCount <- 2
-    fimoThreshold <- 1e-6
-    gh.elite.only <- TRUE
-    maxGap.between.oc.and.gh <- 5000
-       # this region was discovered using viz function below
-    chrom <- "chr21"
-    start <- 29195612
-    end   <- 29207473
-    end - start
-
     bf <-  BigFimo$new(targetGene,
-                       project="BrandLabErythropoiesis",
-                       processCount,
-                       fimoThreshold,
-                       gh.elite.only,
-                       maxGap.between.oc.and.gh,
-                       chrom=chrom, start=start, end=end)
+                       tbl.oc=human.erythropoiesis.brand.oc(),
+                       processCount=2,
+                       fimoThreshold=1e-6,
+                       gh.elite.only=TRUE,
+                       maxGap.between.oc.and.gh=5000)
+                       #chrom=chrom, start=start, end=end)
     tbl.gh <- bf$get.tbl.gh()
-    checkEquals(nrow(tbl.gh), 2)
+    checkEquals(nrow(tbl.gh), 10)
     checkTrue(all(tbl.gh$elite))
 
     bf$calculateRegionsForFimo()
     tbl.gh.oc <- bf$get.tbl.gh.oc()
-    checkEquals(dim(tbl.gh.oc), c(3, 5))
+    checkEquals(dim(tbl.gh.oc), c(43, 5))
 
 } # test_calculateRegionsForFimo_small
-#---------------------------------------------------------------------------------------------------
-test_calculateRegionsForFimo_small_brainFootprints <- function()
-{
-    message(sprintf("--- test_calculateRegionsForFimo_small_brainFootprints"))
-
-    targetGene <- "BACH1"
-    processCount <- 2
-    fimoThreshold <- 1e-6
-    gh.elite.only <- FALSE
-    maxGap.between.oc.and.gh <- 5000
-       # this region was discovered using viz function below
-    chrom <- "chr21"
-    start <- 29195612
-    end   <- 29207473
-    start <- 29178575
-    end   <- 29214651
-
-    end - start
-
-    bf <-  BigFimo$new(targetGene,
-                       project="PriceLabBrainFootprints",
-                       processCount,
-                       fimoThreshold,
-                       gh.elite.only,
-                       maxGap.between.oc.and.gh,
-                       chrom=chrom, start=start, end=end)
-
-    tbl.gh <- bf$get.tbl.gh()
-    checkEquals(nrow(tbl.gh), 10)
-    checkTrue(!all(tbl.gh$elite))
-
-    bf$calculateRegionsForFimo()
-    tbl.gh.oc <- bf$get.tbl.gh.oc()
-    checkEquals(dim(tbl.gh.oc), c(160, 5))
-
-    if(exists("igv")){
-      track <- DataFrameQuantitativeTrack("gh.fp",
-                                          tbl.gh[, c("chrom", "start", "end", "combinedscore")],
-                                          autoscale=TRUE, color="darkgreen")
-      displayTrack(igv, track)
-      track <- DataFrameAnnotationTrack("gh.oc.fp", tbl.gh.oc, color="red", trackHeight=23)
-      displayTrack(igv, track)
-      }
-
-    return(TRUE)
-
-
-} # test_calculateRegionsForFimo_small_brainFootprints
 #---------------------------------------------------------------------------------------------------
 test_calculateRegionsForFimo_small_mayoATAC <- function()
 {
     message(sprintf("--- test_calculateRegionsForFimo_small_mayoATAC"))
 
     targetGene <- "PTK2B"
-    processCount <- 2
-    fimoThreshold <- 1e-4
-    gh.elite.only <- FALSE
-    maxGap.between.oc.and.gh <- 5000
-       # this region was discovered using viz function below
     chrom <- "chr8"
     start <- 27320895
     end   <- 27330083
-
-    end - start
+    #start <- 27310895
+    #end   <- 27340083
 
     bf <-  BigFimo$new(targetGene,
-                       project="MayoATAC",
-                       processCount,
-                       fimoThreshold,
-                       gh.elite.only,
-                       maxGap.between.oc.and.gh,
+                       tbl.oc=human.erythropoiesis.brand.oc(),
+                       processCount=2,
+                       fimoThreshold=1e-4,
+                       gh.elite.only=FALSE,
+                       maxGap.between.oc.and.gh=5000,
                        chrom=chrom, start=start, end=end)
 
     tbl.gh <- bf$get.tbl.gh()
@@ -276,7 +312,8 @@ test_calculateRegionsForFimo_small_mayoATAC <- function()
 
     bf$calculateRegionsForFimo()
     tbl.gh.oc <- bf$get.tbl.gh.oc()
-    checkEquals(dim(tbl.gh.oc), c(5, 5))
+    dim(tbl.gh.oc)
+    checkEquals(dim(tbl.gh.oc), c(6, 5))
 
     if(exists("igv")){
       track <- DataFrameQuantitativeTrack("gh.fp",

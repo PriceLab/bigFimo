@@ -5,12 +5,12 @@ source("~/github/fimoService/batchMode/fimoBatchTools.R")
 BigFimo = R6Class("BigFimo",
 #--------------------------------------------------------------------------------
 private = list(targetGene=NULL,
-               project=NULL,
                fimoThreshold=NULL,
                gh.elite.only=NULL,
                maxGap.between.oc.and.gh=NULL,
                ocExpansion=NULL,
                tbl.gh=NULL,
+               tbl.oc=NULL,
                tbl.gh.oc=NULL,
                regionSize=NULL,
                processCount=NULL,
@@ -23,16 +23,16 @@ private = list(targetGene=NULL,
 #--------------------------------------------------------------------------------
 public = list(
 
-    initialize = function(targetGene, project, processCount, fimoThreshold,
+    initialize = function(targetGene, tbl.oc, processCount, fimoThreshold,
                           gh.elite.only=TRUE, maxGap.between.oc.and.gh=5000,
                           ocExpansion=100, chrom=NA, start=NA, end=NA){
-        stopifnot(project %in% c("BrandLabErythropoiesis",
-                                 "PriceLabBrainFootprints",
-                                 "MayoATAC"))
          if(!file.exists(targetGene))
              dir.create(targetGene)
          private$targetGene  <- targetGene
-         private$project <- project
+         stopifnot(all(colnames(tbl.oc)[1:3] == c("chrom", "start", "end")))
+         stopifnot(substr(colnames(tbl.oc)[1], 1, 3) == "chr")
+         stopifnot(class(tbl.oc[, "chrom"]) == "character")
+         private$tbl.oc <- tbl.oc
          private$processCount <- processCount
          private$fimoThreshold <- fimoThreshold
          private$gh.elite.only <- gh.elite.only
@@ -100,6 +100,9 @@ public = list(
        },
 
     #------------------------------------------------------------------------
+    # find the overlap of oc with fimo - but very generously
+    # any open chromatin within < maxGap.between.oc.and.gh (often 5000)
+    # will be included.   
     calculateRegionsForFimo = function(){
        tbl.gh <- private$tbl.gh   # convenience
        private$regionSize <- with(tbl.gh, max(end) - min(start))
@@ -111,48 +114,15 @@ public = list(
 
        gr.gh <- reduce(GRanges(tbl.gh))
 
-
          # this shoulder artificially expands the oc hit regions
          # allowing for imprecision in those results.
 
-
        shoulder <- private$ocExpansion
-
-       if(private$project == "BrandLabErythropoiesis"){
-          dir <- "~/github/TrenaProjectErythropoiesis/inst/extdata/genomicRegions"
-          full.path <- file.path(dir, "tbl.atacMerged.RData")
-          stopifnot(file.exists(full.path))
-          tbl.atacMerged <- get(load(full.path))
-          tbl.oc <- subset(tbl.atacMerged, chrom==private$chromosome &
-                                           start >= (private$loc.start-shoulder) &
-                                           end <=   (private$loc.end+shoulder))
-          } # brandLabErythropoiesis
-       if(private$project == "PriceLabBrainFootprints"){
-          db <- dbConnect(PostgreSQL(), user= "trena", password="trena", dbname="brain_hint_16", host="khaleesi")
-          # browser()
-          query <- sprintf("select * from regions where chrom='%s' and start >= %d and endpos <= %d",
-                           private$chromosome, private$loc.start, private$loc.end)
-
-          tbl.oc <- dbGetQuery(db, query)
-          dbDisconnect(db)
-          if(nrow(tbl.oc) > 0){
-             tbl.oc <- tbl.oc[, c("chrom", "start", "endpos")]
-             colnames(tbl.oc) <- c("chrom", "start", "end")
-             }
-          } # PriceLabBrainFootprints
-
-       if(private$project == "MayoATAC"){
-          # f <- "~/github/TrenaProjectAD/explore/mayo-epigenetics/atac/dbaConsensusRegionsScored.74273x30.RData"
-          f <- "~/github/TrenaProjectAD/explore/mayo-epigenetics/atac/mayoAllPeaks.merged.96064x4.RData"
-          stopifnot(file.exists(f))
-          tbl.atac <- get(load(f))
-          tbl.oc <- tbl.atac[, c("chrom", "start", "end")]
-          } # MayoATAC
-
-       gr.oc <- GRanges(tbl.oc)
+       gr.oc <- GRanges(private$tbl.oc)
+       gr.oc <- gr.oc + shoulder   # expands both up and downstream
 
          # identify the oc regions which permissively "overlap" with gh,
-         # where any oc region with in maxgap of a gh region is considerd
+         # where any oc region within maxgap of a gh region is considerd
          # an overlap
        gr.ov <- findOverlaps(gr.oc, gr.gh, maxgap=private$maxGap.between.oc.and.gh)
        gr.oc.near.gh <- reduce(gr.oc[queryHits(gr.ov)])
