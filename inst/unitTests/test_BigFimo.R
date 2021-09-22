@@ -1,6 +1,9 @@
 library(RUnit)
+#library(TxDb.Mmusculus.UCSC.mm10.knownGene)
+#library(org.Mm.eg.db)
 #----------------------------------------------------------------------------------------------------
 source("~/github/bigFimo/R/BigFimo.R")
+source("~/github/endophenotypeExplorer/R/getExpressionMatrices.R")
 #----------------------------------------------------------------------------------------------------
 runTests <- function()
 {
@@ -16,9 +19,12 @@ runTests <- function()
     test_calculateRegionsForFimo_medium()
     test_calculateRegionsForFimo_maximal()
     test_includeOnlyGeneHancerIntersectingOC()
-
     test_createFimoTables_explicitRegion()
-    #test_runMany()
+
+
+    test_mouseGene()
+    #test_runMany()   # works, but takes a few minutes
+
 
 } # runTests
 #---------------------------------------------------------------------------------------------------
@@ -171,11 +177,6 @@ test_ctor <- function()
 {
     message(sprintf("--- test_ctor"))
 
-    processCount <- 2
-    fimoThreshold <- 1e-6
-    gh.elite.only <- FALSE
-    maxGap.between.oc.and.gh <- 5000
-
         #------------------------------------------------------------
         # BrandLab erythropoiesis merged (all condition) ATAC-seq
         # regions, thus w/o scores
@@ -183,6 +184,7 @@ test_ctor <- function()
 
         # first, without an explicit genomic region
         # BigFimo intersect genehancer with tbl.oc
+
     targetGene <- "BACH1"
     bf <-  BigFimo$new(targetGene=targetGene,
                        tbl.oc=human.erythropoiesis.brand.oc(),
@@ -410,17 +412,13 @@ test_calculateRegionsForFimo_wholeGene_mayoATAC <- function()
     message(sprintf("--- test_calculateRegionsForFimo_wholeGene_mayoATAC"))
 
     targetGene <- "PTK2B"
-    processCount <- 2
-    fimoThreshold <- 1e-4
-    gh.elite.only <- FALSE
-    maxGap.between.oc.and.gh <- 5000
 
-    bf <-  BigFimo$new(targetGene,
+    bf <-  BigFimo$new(targetGene=targetGene,
                        tbl.oc=human.erythropoiesis.brand.oc(),
-                       processCount,
-                       fimoThreshold,
-                       gh.elite.only,
-                       maxGap.between.oc.and.gh)
+                       processCount=2,
+                       fimoThreshold=1e-4,
+                       gh.elite.only=FALSE,
+                       maxGap.between.oc.and.gh=5000)
 
     tbl.gh <- bf$get.tbl.gh()
     checkEquals(nrow(tbl.gh), 40)
@@ -448,10 +446,6 @@ test_calculateRegionsForFimo_medium<- function()
     message(sprintf("--- test_calculateRegionsForFimo_medium"))
 
     targetGene <- "BACH1"
-    processCount <- 2
-    fimoThreshold <- 1e-6
-    gh.elite.only <- TRUE
-    maxGap.between.oc.and.gh <- 5000
 
        # this region was discovered using viz function below
     chrom <- "chr21"
@@ -459,12 +453,12 @@ test_calculateRegionsForFimo_medium<- function()
     end   <- 29330888
     end - start
 
-    bf <-  BigFimo$new(targetGene,
+    bf <-  BigFimo$new(targetGene=targetGene,
                        tbl.oc=human.erythropoiesis.brand.oc(),
-                       processCount,
-                       fimoThreshold,
-                       gh.elite.only,
-                       maxGap.between.oc.and.gh,
+                       processCount=2,
+                       fimoThreshold=1e-6,
+                       gh.elite.only=TRUE,
+                       maxGap.between.oc.and.gh=5000,
                        chrom=chrom, start=start, end=end)
     tbl.gh <- bf$get.tbl.gh()
     checkEquals(nrow(tbl.gh), 23)
@@ -491,10 +485,6 @@ test_includeOnlyGeneHancerIntersectingOC <- function()
     message(sprintf("--- test_includeOnlyGeneHancerIntersectingOC"))
 
     targetGene <- "BACH1"
-    processCount <- 2
-    fimoThreshold <- 1e-6
-    gh.elite.only <- TRUE
-    maxGap.between.oc.and.gh <- 0
 
        # this region was discovered using viz function below
     chrom <- "chr21"
@@ -502,12 +492,12 @@ test_includeOnlyGeneHancerIntersectingOC <- function()
     end   <- 29120251
     end - start
 
-    bf <-  BigFimo$new(targetGene,
+    bf <-  BigFimo$new(targetGene=targetGene,
                        tbl.oc=human.erythropoiesis.brand.oc(),
-                       processCount,
-                       fimoThreshold,
-                       gh.elite.only,
-                       maxGap.between.oc.and.gh,
+                       processCount=2,
+                       fimoThreshold=1e-6,
+                       gh.elite.only=TRUE,
+                       maxGap.between.oc.and.gh=0,
                        chrom=chrom, start=start, end=end)
     tbl.gh <- bf$get.tbl.gh()
     checkEquals(nrow(tbl.gh), 2)
@@ -534,17 +524,13 @@ test_calculateRegionsForFimo_maximal <- function()
     message(sprintf("--- test_calculateRegionsForFimo_maximal"))
 
     targetGene <- "BACH1"
-    processCount <- 2
-    fimoThreshold <- 1e-6
-    gh.elite.only <- FALSE
-    maxGap.between.oc.and.gh <- 0
 
-    bf <-  BigFimo$new(targetGene,
+    bf <-  BigFimo$new(targetGene=targetGene,
                        tbl.oc=human.erythropoiesis.brand.oc(),
-                       processCount,
-                       fimoThreshold,
-                       gh.elite.only,
-                       maxGap.between.oc.and.gh)
+                       processCount=2,
+                       fimoThreshold=1e-6,
+                       gh.elite.only=FALSE,
+                       maxGap.between.oc.and.gh=0)
     tbl.gh <- bf$get.tbl.gh()
     checkEquals(nrow(tbl.gh), 142)
     checkTrue(!all(tbl.gh$elite))
@@ -569,9 +555,6 @@ test_createFimoTables_explicitRegion <- function()
     message(sprintf("--- test_createFimoTables_explicitRegion"))
 
     targetGene <- "BACH1"
-    fimoThreshold <- 1e-6
-    gh.elite.only <- FALSE
-    maxGap.between.oc.and.gh <- 5000
 
        # this region was discovered using viz function below
     chrom <- "chr21"
@@ -579,12 +562,12 @@ test_createFimoTables_explicitRegion <- function()
     end   <- 29120251
     end - start
 
-    bf <-  BigFimo$new(targetGene,
+    bf <-  BigFimo$new(targetGene=targetGene,
                        tbl.oc=human.erythropoiesis.brand.oc(),
                        processCount=3,
-                       fimoThreshold,
-                       gh.elite.only,
-                       maxGap.between.oc.and.gh,
+                       fimoThreshold=1e-6,
+                       gh.elite.only=FALSE,
+                       maxGap.between.oc.and.gh=5000,
                        chrom=chrom, start=start, end=end)
     tbl.gh <- bf$get.tbl.gh()
     checkEquals(nrow(tbl.gh), 9)
@@ -600,12 +583,12 @@ test_createFimoTables_explicitRegion <- function()
 
        # with five processes created, at least six fimo regions files are needed
 
-    bf <-  BigFimo$new(targetGene,
+    bf <-  BigFimo$new(targetGene=targetGene,
                        tbl.oc=human.erythropoiesis.brand.oc(),
                        processCount=5,
-                       fimoThreshold,
-                       gh.elite.only,
-                       maxGap.between.oc.and.gh,
+                       fimoThreshold=1e-6,
+                       gh.elite.only=FALSE,
+                       maxGap.between.oc.and.gh=5000,
                        chrom=chrom, start=start, end=end)
     tbl.gh <- bf$get.tbl.gh()
     checkEquals(nrow(tbl.gh), 9)
@@ -660,9 +643,9 @@ test_createIndicesToDistributeTasks <- function()
     bf <-  BigFimo$new(targetGene,
                        tbl.oc=human.erythropoiesis.brand.oc(),
                        processCount=3,
-                       fimoThreshold,
-                       gh.elite.only,
-                       maxGap.between.oc.and.gh,
+                       fimoThreshold=1e-6,
+                       gh.elite.only=FALSE,
+                       maxGap.between.oc.and.gh=5000,
                        chrom=chrom, start=start, end=end)
 
    indices <- bf$createIndicesToDistributeTasks(mtcars, 5)
@@ -718,9 +701,9 @@ test_createFimoTables_fullGene <- function()
     bf <-  BigFimo$new(targetGene,
                        tbl.oc=human.erythropoiesis.brand.oc(),
                        processCount=30,
-                       fimoThreshold,
-                       gh.elite.only,
-                       maxGap.between.oc.and.gh,
+                       fimoThreshold=1e-6,
+                       gh.elite.only=FALSE,
+                       maxGap.between.oc.and.gh=5000,
                        chrom=chrom, start=start, end=end)
     tbl.gh <- bf$get.tbl.gh()
     checkEquals(nrow(tbl.gh), 39)
@@ -739,9 +722,9 @@ test_createFimoTables_fullGene <- function()
     bf <-  BigFimo$new(targetGene,
                        tbl.oc=human.erythropoiesis.brand.oc(),
                        processCount=5,
-                       fimoThreshold,
-                       gh.elite.only,
-                       maxGap.between.oc.and.gh,
+                       fimoThreshold=1e-5,
+                       gh.elite.only=FALSE,
+                       maxGap.between.oc.and.gh=5000,
                        chrom=chrom, start=start, end=end)
     tbl.gh <- bf$get.tbl.gh()
     checkEquals(nrow(tbl.gh), 11)
@@ -779,10 +762,10 @@ test_runMany <- function()
 
     bf <-  BigFimo$new(targetGene,
                        tbl.oc=human.erythropoiesis.brand.oc(),
-                       processCount,
-                       fimoThreshold,
-                       gh.elite.only,
-                       maxGap.between.oc.and.gh,
+                       processCount=3,
+                       fimoThreshold=1e-6,
+                       gh.elite.only=FALSE,
+                       maxGap.between.oc.and.gh=5000,
                        chrom=chrom, start=start, end=end)
     bf$calculateRegionsForFimo()
     filenames.roi <- bf$createFimoTables()
@@ -819,6 +802,57 @@ test_runMany <- function()
     checkTrue(max(tbl.fimo$end) <= end)
 
 } # test_runMany
+#---------------------------------------------------------------------------------------------------
+test_mouseGene <- function()
+{
+    message(sprintf("--- test_mouseGene"))
+
+    targetGene <- "Nfe2l2"
+    tbl.geneInfo.mm10 <- get(load("~/github/TrenaProjectMM10/inst/extdata/geneInfoTable.RData"))
+    tbl.targetGene <- subset(tbl.geneInfo.mm10, geneSymbol==targetGene)
+    bf <-  BigFimo$new(targetGene=targetGene,
+                       genome="mm10",
+                       tbl.oc=mouse.liver.encode.oc(),
+                       processCount=2,
+                       fimoThreshold=1e-5,
+                       use.genehancer=FALSE,
+                       gh.elite.only=FALSE,
+                       maxGap.between.oc.and.gh=NA,
+                       chrom=tbl.targetGene$chrom,
+                       start=tbl.targetGene$start - 100,
+                       end=tbl.targetGene$end + 100)
+    tbl.gh <- bf$get.tbl.gh()
+    checkEquals(nrow(tbl.gh), 0)
+
+    bf$calculateRegionsForFimo()
+    tbl.gh.oc <- bf$get.tbl.gh.oc()
+    checkEquals(dim(tbl.gh.oc), c(0,0))
+
+    if(file.exists(targetGene))
+       unlink(sprintf("%s/*", targetGene))
+
+    filenames.roi <- bf$createFimoTables()
+    checkEquals(length(filenames.roi), 3)
+    checkTrue(all(file.exists(file.path(targetGene, filenames.roi))))
+
+
+    bf$runMany()
+    # Sys.sleep(10)
+    completed <- FALSE
+    actual.processes.needed <- length(bf$getFimoRegionsFileList())
+
+    while(!completed){
+        file.count <- length(list.files(path=targetGene, pattern="^fimo.*"))
+        completed <- (file.count == actual.processes.needed)
+        if(!completed){
+            printf("waiting for completion: %d/%d", file.count, actual.processes.needed)
+            Sys.sleep(3)
+        }
+    } # while
+
+    printf("complete %d/%d", actual.processes.needed, actual.processes.needed)
+
+} # test_mouseGene
 #---------------------------------------------------------------------------------------------------
 viz <- function()
 {

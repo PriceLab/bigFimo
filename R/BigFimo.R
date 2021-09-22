@@ -5,7 +5,9 @@ source("~/github/fimoService/batchMode/fimoBatchTools.R")
 BigFimo = R6Class("BigFimo",
 #--------------------------------------------------------------------------------
 private = list(targetGene=NULL,
+               genome=NULL,
                fimoThreshold=NULL,
+               use.genehancer=NULL,
                gh.elite.only=NULL,
                maxGap.between.oc.and.gh=NULL,
                ocExpansion=NULL,
@@ -23,18 +25,21 @@ private = list(targetGene=NULL,
 #--------------------------------------------------------------------------------
 public = list(
 
-    initialize = function(targetGene, tbl.oc, processCount, fimoThreshold,
-                          gh.elite.only=TRUE, maxGap.between.oc.and.gh=5000,
-                          ocExpansion=100, chrom=NA, start=NA, end=NA){
+    initialize = function(targetGene, genome="hg38", tbl.oc, processCount, fimoThreshold,
+                          use.genehancer=TRUE, gh.elite.only=TRUE,
+                          maxGap.between.oc.and.gh=5000, ocExpansion=100,
+                          chrom=NA, start=NA, end=NA){
          if(!file.exists(targetGene))
              dir.create(targetGene)
          private$targetGene  <- targetGene
+         private$genome <- genome
          stopifnot(all(colnames(tbl.oc)[1:3] == c("chrom", "start", "end")))
          stopifnot(substr(colnames(tbl.oc)[1], 1, 3) == "chr")
          stopifnot(class(tbl.oc[, "chrom"]) == "character")
          private$tbl.oc <- tbl.oc
          private$processCount <- processCount
          private$fimoThreshold <- fimoThreshold
+         private$use.genehancer <- use.genehancer
          private$gh.elite.only <- gh.elite.only
          private$maxGap.between.oc.and.gh <- maxGap.between.oc.and.gh
          private$ocExpansion <- ocExpansion
@@ -44,22 +49,30 @@ public = list(
          private$tbl.gh <- self$queryGeneHancer()
 
          if(!is.na(private$loc.start)){
-            gr.explicitLoc <- GRanges(data.frame(chrom=private$tbl.gh$chrom[1],
-                                                 start=private$loc.start,
-                                                 end=private$loc.end))
-            gr.gh  <- GRanges(private$tbl.gh)
-            gh.regions <- subjectHits(findOverlaps(gr.explicitLoc, gr.gh))
-            private$tbl.gh <- private$tbl.gh[gh.regions,]
-         } else {
-            private$chromosome <- private$tbl.gh$chrom[1]
-            private$loc.start <- min(private$tbl.gh$start) - 1000
-            private$loc.end <- max(private$tbl.gh$end) + 1000
-            }
-         },
+            if(private$use.genehancer){
+              gr.gh  <- GRanges(private$tbl.gh)
+              gh.regions <- subjectHits(findOverlaps(gr.explicitLoc, gr.gh))
+              private$tbl.gh <- private$tbl.gh[gh.regions,]
+              private$chromosome <- private$tbl.gh$chrom[1]
+              private$loc.start <- min(private$tbl.gh$start) - 1000
+              private$loc.end <- max(private$tbl.gh$end) + 1000
+              } # use.genehancer
+            if(!private$use.genehancer){
+               tbl.ov <- as.data.frame(findOverlaps(GRanges(private$tbl.oc),
+                                                    GRanges(seqnames=private$chromosome,
+                                                            IRanges(start=private$loc.start,
+                                                                    end=private$loc.end))))
+               tbl.oc.sub <- private$tbl.oc[tbl.ov$queryHits,]
+               private$tbl.oc <- tbl.oc.sub
+               }
+           } #
+         }, # initialize
 
     #------------------------------------------------------------------------
     queryGeneHancer = function(){
 
+       if(!private$use.genehancer)
+            return(data.frame())
        if(grepl("hagfish", Sys.info()[["nodename"]])){
           suppressWarnings(
              db.access.test <- try(system("/sbin/ping -c 1 khaleesi", intern=TRUE, ignore.stderr=TRUE)))
@@ -75,6 +88,7 @@ public = list(
 
     #------------------------------------------------------------------------
     get.tbl.gh = function(){
+       if(nrow(private$tbl.gh) == 0) return(private$tbl.gh)
        if(colnames(private$tbl.gh)[1] == "seqnames"){
            colnames(private$tbl.gh)[1] <- "chrom"
            private$tbl.gh$chrom <- as.character(private$tbl.gh$chrom)
@@ -84,6 +98,7 @@ public = list(
 
     #------------------------------------------------------------------------
     get.tbl.gh.oc = function(){
+       if(nrow(private$tbl.gh.oc) == 0) return(data.frame())
        if(colnames(private$tbl.gh.oc)[1] == "seqnames"){
            colnames(private$tbl.gh.oc)[1] <- "chrom"
            private$tbl.gh.oc$chrom <- as.character(private$tbl.gh.oc$chrom)
@@ -104,6 +119,11 @@ public = list(
     # any open chromatin within < maxGap.between.oc.and.gh (often 5000)
     # will be included.
     calculateRegionsForFimo = function(){
+
+       if(!private$use.genehancer){
+          private$tbl.gh.oc <- data.frame()
+          return()
+          }
        tbl.gh <- private$tbl.gh   # convenience
        private$regionSize <- with(tbl.gh, max(end) - min(start))
        printf("   full genehancer region: %dk", round(private$regionSize/1000, digits=0))
@@ -161,7 +181,10 @@ public = list(
     #------------------------------------------------------------------------
        # create one binary data.frame per process, splitting regions equally among them
     createFimoTables = function(){
-       tbl.roi <- self$get.tbl.gh.oc()
+       if(private$use.genehancer)
+          tbl.roi <- self$get.tbl.gh.oc()
+       else
+          tbl.roi <- private$tbl.oc
        indices <- self$createIndicesToDistributeTasks(tbl.roi, private$processCount)
        filenames <- list()
        for(i in seq_len(length(indices))){
@@ -184,8 +207,10 @@ public = list(
 
     #------------------------------------------------------------------------
     runMany = function(){
-       script <- "~/github/bigFimo/R/fimoProcess.R"
-       printf("---- starting %d processes", length(private$fimoRegionsFileList)) # private$processCount)
+       script <-  switch(private$genome,
+                         hg38="~/github/bigFimo/R/fimoProcess-hg38.R",
+                         mm10="~/github/bigFimo/R/fimoProcess-mm10.R")
+       printf("---- starting %d processes", length(private$fimoRegionsFileList))
        for(fimoRegionsFile in private$fimoRegionsFileList){
            full.path <- file.path(private$targetGene, fimoRegionsFile)
            stopifnot(file.exists(full.path))
