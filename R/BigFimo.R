@@ -50,6 +50,9 @@ public = list(
 
          if(!is.na(private$loc.start)){
             if(private$use.genehancer){
+                gr.explicitLoc <- GRanges(data.frame(chrom=private$tbl.gh$chrom[1],
+                                                     start=private$loc.start,
+                                                     end=private$loc.end))
               gr.gh  <- GRanges(private$tbl.gh)
               gh.regions <- subjectHits(findOverlaps(gr.explicitLoc, gr.gh))
               private$tbl.gh <- private$tbl.gh[gh.regions,]
