@@ -13,16 +13,15 @@ runTests <- function()
     # test_zbtb7a()
 
     test_calculateRegionsForFimo_small()
-    #test_calculateRegionsForFimo_small_brainFootprints()
     test_calculateRegionsForFimo_small_PTK2B()
     test_calculateRegionsForFimo_wholeGene_mayoATAC()
     test_calculateRegionsForFimo_medium()
     test_calculateRegionsForFimo_maximal()
     test_includeOnlyGeneHancerIntersectingOC()
     test_createFimoTables_explicitRegion()
-
-
+    test_tspan14.noGeneHancer()
     test_mouseGene()
+
     #test_runMany()   # works, but takes a few minutes
 
 
@@ -186,6 +185,12 @@ test_ctor <- function()
         # BigFimo intersect genehancer with tbl.oc
 
     targetGene <- "BACH1"
+
+    if(file.exists(targetGene)){
+       unlink(sprintf("%s/*", targetGene))
+       unlink(targetGene, recursive=TRUE)
+       }
+
     bf <-  BigFimo$new(targetGene=targetGene,
                        tbl.oc=human.erythropoiesis.brand.oc(),
                        processCount=2,
@@ -222,6 +227,12 @@ test_ctor <- function()
 test_zbtb7a <- function()
 {
     targetGene <- "ZBTB7A"
+
+    if(file.exists(targetGene)){
+       unlink(sprintf("%s/*", targetGene))
+       unlink(targetGene, recursive=TRUE)
+       }
+
     bf <-  BigFimo$new(targetGene,
                        tbl.oc=human.erythropoiesis.brand.oc(),
                        processCount=30,
@@ -284,6 +295,12 @@ test_calculateRegionsForFimo_small <- function()
     message(sprintf("--- test_calculateRegionsForFimo_small"))
 
     targetGene <- "BACH1"
+
+    if(file.exists(targetGene)){
+       unlink(sprintf("%s/*", targetGene))
+       unlink(targetGene, recursive=TRUE)
+       }
+
     bf <-  BigFimo$new(targetGene,
                        tbl.oc=human.erythropoiesis.brand.oc(),
                        processCount=2,
@@ -307,6 +324,12 @@ test_calculateRegionsForFimo_small_PTK2B <- function()
     message(sprintf("--- test_calculateRegionsForFimo_small_PTK2B"))
 
     targetGene <- "PTK2B"
+
+    if(file.exists(targetGene)){
+       unlink(sprintf("%s/*", targetGene))
+       unlink(targetGene, recursive=TRUE)
+       }
+
     chrom <- "chr8"
     start <- 27320895
     end   <- 27330083
@@ -350,6 +373,12 @@ test_calculateRegionsForFimo_allHumanSources_NDUFS2 <- function()
    targetGene <- "NDUFS2"
    targetGene <- "BACH1"
    targetGene <- "PPOX"
+
+   if(file.exists(targetGene)){
+      unlink(sprintf("%s/*", targetGene))
+      unlink(targetGene, recursive=TRUE)
+      }
+
    fimo.threshold <- 1e-5
 
    bf <-  BigFimo$new(targetGene,
@@ -413,6 +442,12 @@ test_calculateRegionsForFimo_wholeGene_mayoATAC <- function()
 
     targetGene <- "PTK2B"
 
+   if(file.exists(targetGene)){
+      unlink(sprintf("%s/*", targetGene))
+      unlink(targetGene, recursive=TRUE)
+      }
+
+
     bf <-  BigFimo$new(targetGene=targetGene,
                        tbl.oc=human.erythropoiesis.brand.oc(),
                        processCount=2,
@@ -446,6 +481,11 @@ test_calculateRegionsForFimo_medium<- function()
     message(sprintf("--- test_calculateRegionsForFimo_medium"))
 
     targetGene <- "BACH1"
+
+    if(file.exists(targetGene)){
+      unlink(sprintf("%s/*", targetGene))
+      unlink(targetGene, recursive=TRUE)
+      }
 
        # this region was discovered using viz function below
     chrom <- "chr21"
@@ -486,6 +526,11 @@ test_includeOnlyGeneHancerIntersectingOC <- function()
 
     targetGene <- "BACH1"
 
+    if(file.exists(targetGene)){
+      unlink(sprintf("%s/*", targetGene))
+      unlink(targetGene, recursive=TRUE)
+      }
+
        # this region was discovered using viz function below
     chrom <- "chr21"
     start <- 28995780
@@ -525,6 +570,11 @@ test_calculateRegionsForFimo_maximal <- function()
 
     targetGene <- "BACH1"
 
+    if(file.exists(targetGene)){
+      unlink(sprintf("%s/*", targetGene))
+      unlink(targetGene, recursive=TRUE)
+      }
+
     bf <-  BigFimo$new(targetGene=targetGene,
                        tbl.oc=human.erythropoiesis.brand.oc(),
                        processCount=2,
@@ -555,6 +605,12 @@ test_createFimoTables_explicitRegion <- function()
     message(sprintf("--- test_createFimoTables_explicitRegion"))
 
     targetGene <- "BACH1"
+
+    if(file.exists(targetGene)){
+      unlink(sprintf("%s/*", targetGene))
+      unlink(targetGene, recursive=TRUE)
+      }
+
 
        # this region was discovered using viz function below
     chrom <- "chr21"
@@ -632,6 +688,12 @@ test_createIndicesToDistributeTasks <- function()
        # use it hear only to render possible a call to bf$createIndicesToDistributeTasks()
 
     targetGene <- "BACH1"
+
+    if(file.exists(targetGene)){
+      unlink(sprintf("%s/*", targetGene))
+      unlink(targetGene, recursive=TRUE)
+      }
+
     fimoThreshold <- 1e-6
     gh.elite.only <- FALSE
     maxGap.between.oc.and.gh <- 5000
@@ -689,6 +751,12 @@ test_createFimoTables_fullGene <- function()
     message(sprintf("--- test_createFimoTables_fullGene"))
 
     targetGene <- "ZBTB7A"
+    if(file.exists(targetGene)){
+      unlink(sprintf("%s/*", targetGene))
+      unlink(targetGene, recursive=TRUE)
+      }
+
+
     fimoThreshold <- 1e-6
     gh.elite.only <- FALSE
     maxGap.between.oc.and.gh <- 5000
@@ -745,9 +813,10 @@ test_runMany <- function()
     message(sprintf("--- test_runMany"))
     targetGene <- "BACH1"
 
-    files <- list.files(path=targetGene, pattern="*.RData")
-    if(length(files) > 0)
-       unlink(file.path(targetGene, files))
+    if(file.exists(targetGene)){
+      unlink(sprintf("%s/*", targetGene))
+      unlink(targetGene, recursive=TRUE)
+      }
 
     processCount <- 3    # four will actually created, to handle 16 gh.oc regions
     fimoThreshold <- 1e-6
@@ -808,6 +877,12 @@ test_mouseGene <- function()
     message(sprintf("--- test_mouseGene"))
 
     targetGene <- "Nfe2l2"
+
+    if(file.exists(targetGene)){
+      unlink(sprintf("%s/*", targetGene))
+      unlink(targetGene, recursive=TRUE)
+      }
+
     tbl.geneInfo.mm10 <- get(load("~/github/TrenaProjectMM10/inst/extdata/geneInfoTable.RData"))
     tbl.targetGene <- subset(tbl.geneInfo.mm10, geneSymbol==targetGene)
     bf <-  BigFimo$new(targetGene=targetGene,
@@ -824,12 +899,9 @@ test_mouseGene <- function()
     tbl.gh <- bf$get.tbl.gh()
     checkEquals(nrow(tbl.gh), 0)
 
-    bf$calculateRegionsForFimo()
+    tbl.regions <- bf$calculateRegionsForFimo()
     tbl.gh.oc <- bf$get.tbl.gh.oc()
-    checkEquals(dim(tbl.gh.oc), c(0,0))
-
-    if(file.exists(targetGene))
-       unlink(sprintf("%s/*", targetGene))
+    checkEquals(dim(tbl.gh.oc), c(31,4))
 
     filenames.roi <- bf$createFimoTables()
     checkEquals(length(filenames.roi), 3)
@@ -853,6 +925,83 @@ test_mouseGene <- function()
     printf("complete %d/%d", actual.processes.needed, actual.processes.needed)
 
 } # test_mouseGene
+#---------------------------------------------------------------------------------------------------
+test_tspan14.noGeneHancer <- function()
+{
+    message(sprintf("--- test_tspan14.noGeneHancer"))
+
+    fimoThreshold <- 1e-6     # 1e-4: 1654  1e-6: 32  1e-3  11,331
+    processCount <- 3
+    targetGene <- "TSPAN14"
+    gh.elite.only <- FALSE
+    maxGap.between.oc.and.gh <- 5000
+
+    if(file.exists(targetGene)){
+       unlink(sprintf("%s/*", targetGene))
+       unlink(targetGene, recursive=TRUE)
+       }
+
+     # this region was discovered using viz function below
+
+    chrom <- "chr10"
+    start <- 80508193
+    end   <- 80512482
+
+        # create a fake table of open chromatin, the regions we want
+        # fimo to search.   this fake table is 3 slightly overlapping
+        # regions covering  start to end, with some shoulder
+    landmarks <- seq(from=start, to=end, length.out=4)
+    starts <- landmarks[1:3]
+    ends <- landmarks[2:4]
+    starts <- starts -100
+    ends <- ends + 100
+
+    tbl.oc.faux <- data.frame(chrom=chrom, start=starts, end=ends, stringsAsFactors=FALSE)
+
+    bf <-  BigFimo$new(targetGene,
+                       tbl.oc=tbl.oc.faux,
+                       processCount=3,
+                       fimoThreshold=fimoThreshold,
+                       use.genehancer=FALSE,
+                       gh.elite.only=FALSE,
+                   maxGap.between.oc.and.gh=5000,
+                   chrom=chrom, start=start-100, end=end+100)
+    bf$calculateRegionsForFimo()
+    filenames.roi <- bf$createFimoTables()
+    checkTrue(all(file.exists(file.path(targetGene, filenames.roi))))
+
+
+    bf$runMany()
+    completed <- FALSE
+    actual.processes.needed <- length(bf$getFimoRegionsFileList())
+
+    while(!completed){
+        file.count <- length(list.files(path=targetGene, pattern="^fimo.*"))
+        completed <- (file.count == actual.processes.needed)
+        if(!completed){
+            printf("waiting for completion: %d/%d", file.count, actual.processes.needed)
+            Sys.sleep(3)
+        }
+    } # while
+
+    printf("complete %d/%d", actual.processes.needed, actual.processes.needed)
+
+    result.files <- list.files(path=targetGene, pattern="^fimo.*")
+    checkEquals(length(result.files), actual.processes.needed)
+    tbls <- list()
+    for(file in result.files){
+       tbl <- get(load(file.path(targetGene, file)))
+       tbls[[file]] <- tbl
+       }
+    tbl.fimo <- do.call(rbind, tbls)
+       # with regions overlapping, there may be some duplicates.  eliminate them
+    tbl.fimo <- unique(tbl.fimo[order(tbl.fimo$start, decreasing=FALSE),])
+    rownames(tbl.fimo) <- NULL
+    checkEquals(ncol(tbl.fimo), 9)
+    checkTrue(min(tbl.fimo$start) >= (start - 1000))
+    checkTrue(max(tbl.fimo$end) <= (end + 1000))
+
+} # test_tspan14.noGeneHancer
 #---------------------------------------------------------------------------------------------------
 viz <- function()
 {

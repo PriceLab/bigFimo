@@ -118,14 +118,14 @@ public = list(
        },
 
     #------------------------------------------------------------------------
-    # find the overlap of oc with fimo - but very generously
+    # find the overlap of oc with genehancer - but very generously
     # any open chromatin within < maxGap.between.oc.and.gh (often 5000)
     # will be included.
     calculateRegionsForFimo = function(){
 
        if(!private$use.genehancer){
-          private$tbl.gh.oc <- data.frame()
-          return()
+          private$tbl.gh.oc <- private$tbl.oc
+          return(private$tbl.gh.oc)
           }
        tbl.gh <- private$tbl.gh   # convenience
        private$regionSize <- with(tbl.gh, max(end) - min(start))
@@ -154,6 +154,7 @@ public = list(
          # add a width column, for subsequent convenience
        tbl.gh.oc$width <- 1 + tbl.gh.oc$end - tbl.gh.oc$start
        private$tbl.gh.oc <- tbl.gh.oc
+       tbl.gh.oc
        },
 
     #------------------------------------------------------------------------
@@ -193,6 +194,9 @@ public = list(
        for(i in seq_len(length(indices))){
            elements.this.file <- indices[[i]]
            tbl.out <- tbl.roi[elements.this.file,]
+           tbl.out$start <- as.integer(tbl.out$start)
+           tbl.out$end <- as.integer(tbl.out$end)
+           tbl.out$chrom <- as.character(tbl.out$chrom)
            filename <- sprintf("%s.%02d.fimoRegions-%05d.RData", private$targetGene, i, nrow(tbl.out))
            dir <- private$targetGene
            full.path <- file.path(dir, filename)
