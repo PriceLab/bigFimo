@@ -22,6 +22,7 @@ runTests <- function()
     test_createFimoTables_explicitRegion()
     test_tspan14.noGeneHancer()
     test_mouseGene()
+    test_b4galt3()
 
     #test_runMany()   # works, but takes a few minutes
 
@@ -1123,7 +1124,6 @@ test_b4galt3 <- function()
        displayTrack(igv, track)
        }
 
-    tbl.fimo$start > start
 
 } # test_b4galt3
 #---------------------------------------------------------------------------------------------------
