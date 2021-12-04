@@ -2,8 +2,9 @@ library(RUnit)
 #library(TxDb.Mmusculus.UCSC.mm10.knownGene)
 #library(org.Mm.eg.db)
 #----------------------------------------------------------------------------------------------------
-source("~/github/bigFimo/R/BigFimo.R")
-source("~/github/endophenotypeExplorer/R/getExpressionMatrices.R")
+library(BigFimo)
+# source("~/github/bigFimo/R/BigFimo.R")
+# source("~/github/endophenotypeExplorer/R/getExpressionMatrices.R")
 #----------------------------------------------------------------------------------------------------
 runTests <- function()
 {
@@ -997,11 +998,134 @@ test_tspan14.noGeneHancer <- function()
        # with regions overlapping, there may be some duplicates.  eliminate them
     tbl.fimo <- unique(tbl.fimo[order(tbl.fimo$start, decreasing=FALSE),])
     rownames(tbl.fimo) <- NULL
+    browser()
     checkEquals(ncol(tbl.fimo), 9)
     checkTrue(min(tbl.fimo$start) >= (start - 1000))
     checkTrue(max(tbl.fimo$end) <= (end + 1000))
 
 } # test_tspan14.noGeneHancer
+#---------------------------------------------------------------------------------------------------
+# B4GALT3 is in an eQTL downstream of ad GWAS variant rs4575098. a coding variant for this gene
+# is used in recent oligogenic genomic risk score for LOAD.
+# i add this test after some months not using BigFimo, and after making the package installable,
+#
+test_b4galt3 <- function()
+{
+    message(sprintf("--- test_b4galt3"))
+
+    chrom <- "chr1"
+    start <- 161184710
+    end   <- 161186977
+
+    span <- 1 + end - start
+    print(span)
+    targetGene <- "B4GALT3"
+
+    fimo.pval.threshold <- 1e-6
+
+      # BigFimo needs specified regions, as many as the processCount (or more)
+      # which can be fed to different processes to work on
+      # we start here without genomic regions created by ATAC-seq of GeneHancer
+      # so gin some up.
+
+    landmarks <- seq(from=start, to=end, length.out=4)
+    starts <- landmarks[1:3]
+    ends <- landmarks[2:4]
+    starts <- starts - 10
+    ends <- ends + 10
+
+    tbl.oc.faux <- data.frame(chrom=chrom, start=starts, end=ends, stringsAsFactors=FALSE)
+
+    if(file.exists(targetGene))
+        unlink(targetGene, recursive=TRUE)
+
+    bf <-  BigFimo$new(targetGene=targetGene,
+                       tbl.oc=tbl.oc.faux,
+                       processCount=3,
+                       fimoThreshold=fimo.pval.threshold,
+                       use.genehancer=FALSE,
+                       gh.elite.only=FALSE,
+                       maxGap.between.oc.and.gh=0,
+                       chrom=chrom, start=start, end=end)
+
+    tbl.gh <- bf$get.tbl.gh()
+    checkEquals(nrow(tbl.gh), 0)
+
+    bf$calculateRegionsForFimo()
+    tbl.gh.oc <- bf$get.tbl.gh.oc()
+    checkEquals(dim(tbl.gh.oc), c(3, 3))
+
+    filenames.roi <- bf$createFimoTables()
+    checkEquals(length(filenames.roi), 3)
+    checkTrue(all(file.exists(file.path(targetGene, filenames.roi))))
+
+      #------------------------------------------------
+      # now run fimobatch on those three region files
+      #------------------------------------------------
+
+    bf$runMany()
+    completed <- FALSE
+    actual.processes.needed <- length(bf$getFimoRegionsFileList())
+
+    while(!completed){
+        file.count <- length(list.files(path=targetGene, pattern="^fimo.*"))
+        completed <- (file.count == actual.processes.needed)
+        if(!completed){
+            printf("waiting for completion: %d/%d", file.count, actual.processes.needed)
+            Sys.sleep(3)
+            }
+       } # while
+
+    printf("complete %d/%d", actual.processes.needed, actual.processes.needed)
+
+    result.files <- list.files(path=targetGene, pattern="^fimo.*")
+    checkEquals(length(result.files), actual.processes.needed)
+    tbls <- list()
+    for(file in result.files){
+       tbl <- get(load(file.path(targetGene, file)))
+       tbls[[file]] <- tbl
+       }
+    tbl.fimo <- do.call(rbind, tbls)
+       # with regions overlapping, there may be some duplicates.  eliminate them
+    tbl.fimo <- unique(tbl.fimo[order(tbl.fimo$start, decreasing=FALSE),])
+    rownames(tbl.fimo) <- NULL
+    expected.colnames <- c("chrom", "start", "end", "tf", "strand", "score", "p.value",
+                           "matched_sequence", "motif_id")
+    checkEquals(colnames(tbl.fimo), expected.colnames)
+    checkTrue(all(tbl.fimo$start >= start - 10))
+    checkTrue(all(tbl.fimo$end   <= end - 10))
+    checkTrue(all(tbl.fimo$chrom == chrom))
+    checkTrue(all(tbl.fimo$p.value <= fimo.pval.threshold))
+    checkEquals(nrow(tbl.fimo), 33)
+
+    viz <= FALSE
+    if(viz){
+       igv <- start.igv(targetGene, "hg38")
+       zoomOut(igv)
+       library(ghdb)
+       ghdb <- GeneHancerDB()
+       tbl.roi <- data.frame(chrom=chrom, start=start, end=end, stringsAsFactors=FALSE)
+       track <- DataFrameAnnotationTrack("roi", tbl.roi, color="darkgreen")
+       displayTrack(igv, track)
+
+       track <- DataFrameAnnotationTrack("regions.faux", tbl.oc.faux, color="random")
+       displayTrack(igv, track)
+
+       tbl.gh <- retrieveEnhancersFromDatabase(ghdb, targetGene, tissues="all")
+       dim(tbl.gh)
+       tbl.gh.strong <- subset(tbl.gh, elite)
+       dim(tbl.gh.strong)
+       track <- DataFrameQuantitativeTrack("gh",
+                                           tbl.gh[, c("chrom", "start", "end", "combinedscore")],
+                                           autoscale=TRUE, color="brown")
+       displayTrack(igv, track)
+       track <- DataFrameAnnotationTrack("fimo", tbl.fimo, color="blue")
+       displayTrack(igv, track)
+       }
+
+    tbl.fimo$start > start
+
+} # test_b4galt3
 #---------------------------------------------------------------------------------------------------
 viz <- function()
 {

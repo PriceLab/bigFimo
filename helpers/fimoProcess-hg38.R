@@ -16,7 +16,7 @@ if(interactive()){
     fimo.threshold <- as.numeric(args[3])
     }
 
-printf("--- staring ~/github/bigFimo/R/fimoProcess.R")
+printf("--- starting ~/github/bigFimo/R/fimoProcess.R")
 printf("    fimoRegionsFile: %s", fimoRegionsFile)
 printf("    file.exists: %s", file.exists(fimoRegionsFile))
 stopifnot(file.exists(fimoRegionsFile))

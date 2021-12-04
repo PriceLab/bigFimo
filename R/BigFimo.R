@@ -1,30 +1,63 @@
-library(R6)
-library(RPostgreSQL)
-library(ghdb)
+# BigFimo
+#----------------------------------------------------------------------------------------------------
+#' @import R6
+#' @importFrom RPostgreSQL dbConnect dbListTables dbGetQuery dbListConnections dbDisconnect
+#' @import GenomicRanges
+#' @import ghdb
+#'
+#' @title BigFimo
+#------------------------------------------------------------------------------------------------------------------------
+#' @name BigFimo
+#' @rdname BigFimo
+#' @aliases BigFimo
+#----------------------------------------------------------------------------------------------------
+#' @description
+#' An R6 Class to prepare for, and then run, multiple instances of FIMO.
+#'
+#' @export
+#'
+#----------------------------------------------------------------------------------------------------
 source("~/github/fimoService/batchMode/fimoBatchTools.R")
+#----------------------------------------------------------------------------------------------------
 BigFimo = R6Class("BigFimo",
+    #--------------------------------------------------------------------------------
+    private = list(targetGene=NULL,
+                   genome=NULL,
+                   fimoThreshold=NULL,
+                   use.genehancer=NULL,
+                   gh.elite.only=NULL,
+                   maxGap.between.oc.and.gh=NULL,
+                   ocExpansion=NULL,
+                   tbl.gh=NULL,
+                   tbl.oc=NULL,
+                   tbl.gh.oc=NULL,
+                   regionSize=NULL,
+                   processCount=NULL,
+                   chromosome=NULL,
+                   loc.start=NULL,
+                   loc.end=NULL,
+                   motifs=NULL,
+                   fimoRegionsFileList=NULL
+                   ),
 #--------------------------------------------------------------------------------
-private = list(targetGene=NULL,
-               genome=NULL,
-               fimoThreshold=NULL,
-               use.genehancer=NULL,
-               gh.elite.only=NULL,
-               maxGap.between.oc.and.gh=NULL,
-               ocExpansion=NULL,
-               tbl.gh=NULL,
-               tbl.oc=NULL,
-               tbl.gh.oc=NULL,
-               regionSize=NULL,
-               processCount=NULL,
-               chromosome=NULL,
-               loc.start=NULL,
-               loc.end=NULL,
-               motifs=NULL,
-               fimoRegionsFileList=NULL
-               ),
-#--------------------------------------------------------------------------------
-public = list(
+    public = list(
 
+
+      #' @description
+      #' Create a new BigFimo
+      #' @param targetGene  character, the gene of interest.
+      #' @param genome character default "hg38"
+      #' @param tbl.oc data.frame, specified areas of (additional) open chromatin in which to run fio
+      #' @param processCount integer number of parallel processes
+      #' @param fimoThreshold numeric, 1e-4 for example
+      #' @param use.genehancer logical, use GeneHancer for open chromatin, default TRUE
+      #' @param gh.elite.only logical, use only doubly-attested GeneHancer regions, default TRUE
+      #' @param maxGap.between.oc.and.gh numeric, 5000 by default
+      #' @param ocExpansion numeric, pad reported open chromatin by this amount, default 100
+      #' @param chrom character optional fimo region, used rather than fimo & tbl.oc? default NA
+      #' @param start numeric optional fimo region, used rather than fimo & tbl.oc? default NA
+      #' @param end  numeric optional fimo region, used rather than fimo & tbl.oc? default NA
+      #' @return A new `BigFimo` object.
     initialize = function(targetGene, genome="hg38", tbl.oc, processCount, fimoThreshold,
                           use.genehancer=TRUE, gh.elite.only=TRUE,
                           maxGap.between.oc.and.gh=5000, ocExpansion=100,
@@ -72,6 +105,9 @@ public = list(
          }, # initialize
 
     #------------------------------------------------------------------------
+      #' @description
+      #' call the genehancer database on khaleesi
+      #' @return data.frame
     queryGeneHancer = function(){
 
        if(!private$use.genehancer)
@@ -90,6 +126,9 @@ public = list(
        },
 
     #------------------------------------------------------------------------
+      #' @description
+      #' access to the previously extracted genehancer table
+      #' @return data.frame
     get.tbl.gh = function(){
        if(nrow(private$tbl.gh) == 0) return(private$tbl.gh)
        if(colnames(private$tbl.gh)[1] == "seqnames"){
@@ -100,6 +139,9 @@ public = list(
         },
 
     #------------------------------------------------------------------------
+      #' @description
+      #' access to the previously calculated overlap of genehancer and open chromatin tables
+      #' @return data.frame
     get.tbl.gh.oc = function(){
        if(nrow(private$tbl.gh.oc) == 0) return(data.frame())
        if(colnames(private$tbl.gh.oc)[1] == "seqnames"){
@@ -110,6 +152,10 @@ public = list(
        },
 
     #------------------------------------------------------------------------
+      #' @description
+      #' fimo needs a meme file with motifs of interest.  jaspar2018 & hocomoco-core-A
+      #  are our standard choice
+      #' @return nothing
     createMemeFile = function(){
        meme.file <- "jaspar2018-hocomocoCore.meme"
        private$motifs <- query(MotifDb, c("sapiens"), c("jaspar2018", "HOCOMOCOv11-core-A"))
@@ -118,9 +164,11 @@ public = list(
        },
 
     #------------------------------------------------------------------------
-    # find the overlap of oc with genehancer - but very generously
-    # any open chromatin within < maxGap.between.oc.and.gh (often 5000)
-    # will be included.
+      #' @description
+      #' find the overlap of oc with genehancer - but very generously
+      #' any open chromatin within < maxGap.between.oc.and.gh (often 5000)
+      #'  will be included.
+      #' @return data.frame the overlap of open chromatin with genehancer
     calculateRegionsForFimo = function(){
 
        if(!private$use.genehancer){
@@ -158,9 +206,13 @@ public = list(
        },
 
     #------------------------------------------------------------------------
-    # we want to partition the fimo regions equally across the approximate
-    # number of suggested processes.  this function returns a list of indices
-    # each a vector. sometimes an extra process is needed, sometimes fewer
+      #' @description
+      #' we want to partition the fimo regions equally across the approximate
+      #' number of suggested processes.  this function returns a list of indices
+      #' each a vector. sometimes an extra process is needed, sometimes fewer
+      #' @param tbl data.frame, specifies regions we want to distribute across multiple processes
+      #' @param suggestedProcessCount integer, may be adjusted up or down
+      #' @return list of integer vectors
     createIndicesToDistributeTasks = function(tbl, suggestedProcessCount){
 
        numberOfGroups <- suggestedProcessCount
@@ -183,7 +235,10 @@ public = list(
        },
 
     #------------------------------------------------------------------------
-       # create one binary data.frame per process, splitting regions equally among them
+      #' @description
+      #' create one binary data.frame per process, splitting regions equally among them
+      #' @return character vector, the list of files containing the data.frames
+      #
     createFimoTables = function(){
        if(private$use.genehancer)
           tbl.roi <- self$get.tbl.gh.oc()
@@ -208,15 +263,21 @@ public = list(
        },
 
     #------------------------------------------------------------------------
+      #' @description
+      #' the files listed here specify regions in which fimo will search
+      #' @return character vector
     getFimoRegionsFileList = function(){
         private$fimoRegionsFileList
         },
 
     #------------------------------------------------------------------------
+      #' @description
+      #' initiates one fimo processes per region file, each previously created
+      #' @return nothing
     runMany = function(){
        script <-  switch(private$genome,
-                         hg38="~/github/bigFimo/R/fimoProcess-hg38.R",
-                         mm10="~/github/bigFimo/R/fimoProcess-mm10.R")
+                         hg38="~/github/bigFimo/helpers/fimoProcess-hg38.R",
+                         mm10="~/github/bigFimo/helpers/fimoProcess-mm10.R")
        printf("---- starting %d processes", length(private$fimoRegionsFileList))
        for(fimoRegionsFile in private$fimoRegionsFileList){
            full.path <- file.path(private$targetGene, fimoRegionsFile)
