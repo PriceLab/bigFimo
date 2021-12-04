@@ -1098,7 +1098,7 @@ test_b4galt3 <- function()
     checkTrue(all(tbl.fimo$p.value <= fimo.pval.threshold))
     checkEquals(nrow(tbl.fimo), 33)
 
-    viz <= FALSE
+    viz <- FALSE
     if(viz){
        igv <- start.igv(targetGene, "hg38")
        zoomOut(igv)
