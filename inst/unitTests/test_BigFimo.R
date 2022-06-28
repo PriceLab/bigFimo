@@ -6,6 +6,17 @@ library(BigFimo)
 # source("~/github/bigFimo/R/BigFimo.R")
 # source("~/github/endophenotypeExplorer/R/getExpressionMatrices.R")
 #----------------------------------------------------------------------------------------------------
+# create a new meme file:
+# library(MotifDb)
+# motifs <- query(MotifDb, c("sapiens","jaspar2022"))
+# length(motifs) # [1] 692
+# export(motifs, con="~/github/bigFimo/jaspar2022-human.meme", format="meme")
+# modiffy ~/github/bigFimo/helpers/fimoProcess-hg38.R:
+# if(nrow(tbl.regions) > 0){
+#    meme.file <- "~/github/bigFimo/jaspar2022-human.meme"
+#    tbl.fimo <- fimoBatch(tbl.regions, matchThreshold=fimo.threshold, genomeName="hg38", pwmFile=meme.file)
+#    } # 
+#----------------------------------------------------------------------------------------------------
 runTests <- function()
 {
     test_ctor()
