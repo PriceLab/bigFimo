@@ -1,8 +1,8 @@
 Package: BigFimo
 Type: Package
 Title: BigFimo
-Version: 1.0.6
-Date: 2021-12-03
+Version: 1.0.7
+Date: 2022-06-28
 Author: Paul Shannon
 Maintainer: Paul Shannon <paul.thurmond.shannon@gmail.com>
 Depends: R (>= 4.1.0), R6, GenomicRanges

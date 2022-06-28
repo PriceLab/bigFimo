@@ -153,12 +153,15 @@ BigFimo = R6Class("BigFimo",
 
     #------------------------------------------------------------------------
       #' @description
-      #' fimo needs a meme file with motifs of interest.  jaspar2018 & hocomoco-core-A
+      #' fimo needs a meme file with motifs of interest.  just jaspar2022 for now
+      #' used to be (before june 2022)    jaspar2018 & hocomoco-core-A
       #  are our standard choice
       #' @return nothing
     createMemeFile = function(){
-       meme.file <- "jaspar2018-hocomocoCore.meme"
-       private$motifs <- query(MotifDb, c("sapiens"), c("jaspar2018", "HOCOMOCOv11-core-A"))
+       meme.file <- "jaspar2022.meme"
+       private$motifs <- query(MotifDb, c("sapiens"), c("jaspar2022"))
+       # meme.file <- "jaspar2018-hocomocoCore.meme"
+       # private$motifs <- query(MotifDb, c("sapiens"), c("jaspar2018", "HOCOMOCOv11-core-A"))
        printf("--- exporting %d motifs to %s", length(private$motifs), meme.file)
        export(private$motifs, con=meme.file, format="meme")
        },

@@ -120,7 +120,8 @@ data.frame
 \if{html}{\out{<a id="method-createMemeFile"></a>}}
 \if{latex}{\out{\hypertarget{method-createMemeFile}{}}}
 \subsection{Method \code{createMemeFile()}}{
-fimo needs a meme file with motifs of interest.  jaspar2018 & hocomoco-core-A
+fimo needs a meme file with motifs of interest.  just jaspar2022 for now
+used to be (before june 2022)    jaspar2018 & hocomoco-core-A
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{BigFimo$createMemeFile()}\if{html}{\out{</div>}}
 }

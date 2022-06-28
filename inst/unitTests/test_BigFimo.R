@@ -999,7 +999,6 @@ test_tspan14.noGeneHancer <- function()
        # with regions overlapping, there may be some duplicates.  eliminate them
     tbl.fimo <- unique(tbl.fimo[order(tbl.fimo$start, decreasing=FALSE),])
     rownames(tbl.fimo) <- NULL
-    browser()
     checkEquals(ncol(tbl.fimo), 9)
     checkTrue(min(tbl.fimo$start) >= (start - 1000))
     checkTrue(max(tbl.fimo$end) <= (end + 1000))
