@@ -59,12 +59,14 @@ BigFimo = R6Class("BigFimo",
       #' @param start numeric optional fimo region, used rather than fimo & tbl.oc? default NA
       #' @param end  numeric optional fimo region, used rather than fimo & tbl.oc? default NA
       #' @param motifs a list, default empty, or motifs obtained from querying MotifDb
+      #' @param meme.file.path character, optionally points to a (possibly smaller, custom) meme file,
+      #'    in contrast to frequently adequate "~/github/bigFimo/jaspar2022-human.meme"
       #' @return A new `BigFimo` object.
     initialize = function(targetGene, genome="hg38", tbl.oc, processCount, fimoThreshold,
                           use.genehancer=TRUE, gh.elite.only=TRUE,
                           maxGap.between.oc.and.gh=5000, ocExpansion=100,
                           chrom=NA, start=NA, end=NA, motifs=list(),
-                          meme.file.path=NA){
+                          meme.file.path){
          if(!file.exists(targetGene))
              dir.create(targetGene)
          private$targetGene  <- targetGene
@@ -83,10 +85,8 @@ BigFimo = R6Class("BigFimo",
          private$loc.start=start
          private$loc.end=end
          private$motifs <- motifs
-         private$meme.file.path <- "~/github/bigFimo/jaspar2022-human.meme"
-         if(!is.na(meme.file.path))
-            private$meme.file.path <- meme.file.path
-             
+         private$meme.file.path <- meme.file.path
+
          private$tbl.gh <- self$queryGeneHancer()
 
          if(!is.na(private$loc.start)){
@@ -222,7 +222,8 @@ BigFimo = R6Class("BigFimo",
       #' we want to partition the fimo regions equally across the approximate
       #' number of suggested processes.  this function returns a list of indices
       #' each a vector. sometimes an extra process is needed, sometimes fewer
-      #' @param tbl data.frame, specifies regions we want to distribute across multiple processes
+      #' @param tbl data.frame, specifies regions we want to distribute across
+      #'             multiple processes
       #' @param suggestedProcessCount integer, may be adjusted up or down
       #' @return list of integer vectors
     createIndicesToDistributeTasks = function(tbl, suggestedProcessCount){
@@ -236,7 +237,7 @@ BigFimo = R6Class("BigFimo",
            group.size <- group.size + 1
            numberOfGroups <- nrow(tbl) %/% group.size
            remainder <- nrow(tbl) %% numberOfGroups
-       }
+           }
        indices <- lapply(seq_len(numberOfGroups),
                          function(i) seq(from=(1 + (i-1)*group.size), length.out=group.size))
        indices.created <- sum(unlist(lapply(indices, length)))
@@ -287,15 +288,16 @@ BigFimo = R6Class("BigFimo",
       #' initiates one fimo processes per region file, each previously created
       #' @return nothing
     runMany = function(){
-       browser()
+       hg38.script <- system.file(package="BigFimo", "helpers/fimoProcess-hg38.R")
+       mm10.script <- system.file(package="BigFimo", "helpers/fimoProcess-mm10.R")
        script <-  switch(private$genome,
-                         hg38="~/github/bigFimo/helpers/fimoProcess-hg38.R",
-                         mm10="~/github/bigFimo/helpers/fimoProcess-mm10.R")
+                         hg38=hg38.script,
+                         mm10=mm10.script)
        printf("---- starting %d processes", length(private$fimoRegionsFileList))
        for(fimoRegionsFile in private$fimoRegionsFileList){
            full.path <- file.path(private$targetGene, fimoRegionsFile)
            stopifnot(file.exists(full.path))
-           cmd <- sprintf("Rscript %s %s %s %10.8f %s &",
+           cmd <- sprintf("Rscript %s %s %s %10.8f %s",
                           script,
                           private$targetGene,
                           full.path,
@@ -305,7 +307,30 @@ BigFimo = R6Class("BigFimo",
            printf("cmd: %s", cmd)
            system(cmd, wait=FALSE)
            } # for i
-       }
+       },
+    #------------------------------------------------------------------------
+      #' @description
+      #' runMany creates one output fimo results file for each region, which
+      #' we combine into a single possibly large data.frame here
+      #' @return data.frame
+    combineResults = function(){
+       fimo.output.files <- list.files(path=private$targetGene,
+                                       pattern=sprintf("^fimo.%s.*RData", private$targetGene))
+       stopifnot(length(fimo.output.files) == private$processCount)
+       tbls <- list()
+       f <- 0
+       for(file in fimo.output.files){
+          f <- f + 1
+          tbl.fimo <- get(load(file.path(private$targetGene, file)))
+          tbls[[f]] <- tbl.fimo
+          } # for
+       tbl.fimo <- do.call(rbind, tbls)
+       new.order <- order(tbl.fimo$start, decreasing=FALSE)
+       tbl.fimo <- tbl.fimo[new.order,]
+       tbl.fimo <- unique(tbl.fimo)
+       invisible(tbl.fimo)
+       } # combineResults
+    #------------------------------------------------------------------------
     ) # public
 
 ) # class BigFimo

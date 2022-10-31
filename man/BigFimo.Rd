@@ -19,6 +19,7 @@ An R6 Class to prepare for, and then run, multiple instances of FIMO.
 \item \href{#method-BigFimo-createFimoTables}{\code{BigFimo$createFimoTables()}}
 \item \href{#method-BigFimo-getFimoRegionsFileList}{\code{BigFimo$getFimoRegionsFileList()}}
 \item \href{#method-BigFimo-runMany}{\code{BigFimo$runMany()}}
+\item \href{#method-BigFimo-combineResults}{\code{BigFimo$combineResults()}}
 \item \href{#method-BigFimo-clone}{\code{BigFimo$clone()}}
 }
 }
@@ -42,7 +43,7 @@ Create a new BigFimo
   start = NA,
   end = NA,
   motifs = list(),
-  meme.file.path = NA
+  meme.file.path
 )}\if{html}{\out{</div>}}
 }
 
@@ -74,6 +75,9 @@ Create a new BigFimo
 \item{\code{end}}{numeric optional fimo region, used rather than fimo & tbl.oc? default NA}
 
 \item{\code{motifs}}{a list, default empty, or motifs obtained from querying MotifDb}
+
+\item{\code{meme.file.path}}{character, optionally points to a (possibly smaller, custom) meme file,
+in contrast to frequently adequate "~/github/bigFimo/jaspar2022-human.meme"}
 }
 \if{html}{\out{</div>}}
 }
@@ -163,7 +167,8 @@ each a vector. sometimes an extra process is needed, sometimes fewer
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{tbl}}{data.frame, specifies regions we want to distribute across multiple processes}
+\item{\code{tbl}}{data.frame, specifies regions we want to distribute across
+multiple processes}
 
 \item{\code{suggestedProcessCount}}{integer, may be adjusted up or down}
 }
@@ -210,6 +215,20 @@ initiates one fimo processes per region file, each previously created
 
 \subsection{Returns}{
 nothing
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-BigFimo-combineResults"></a>}}
+\if{latex}{\out{\hypertarget{method-BigFimo-combineResults}{}}}
+\subsection{Method \code{combineResults()}}{
+runMany creates one output fimo results file for each region, which
+we combine into a single possibly large data.frame here
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{BigFimo$combineResults()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+data.frame
 }
 }
 \if{html}{\out{<hr>}}
