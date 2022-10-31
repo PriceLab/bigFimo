@@ -37,6 +37,7 @@ BigFimo = R6Class("BigFimo",
                    loc.start=NULL,
                    loc.end=NULL,
                    motifs=NULL,
+                   meme.file.path=NULL,
                    fimoRegionsFileList=NULL
                    ),
 #--------------------------------------------------------------------------------
@@ -57,11 +58,13 @@ BigFimo = R6Class("BigFimo",
       #' @param chrom character optional fimo region, used rather than fimo & tbl.oc? default NA
       #' @param start numeric optional fimo region, used rather than fimo & tbl.oc? default NA
       #' @param end  numeric optional fimo region, used rather than fimo & tbl.oc? default NA
+      #' @param motifs a list, default empty, or motifs obtained from querying MotifDb
       #' @return A new `BigFimo` object.
     initialize = function(targetGene, genome="hg38", tbl.oc, processCount, fimoThreshold,
                           use.genehancer=TRUE, gh.elite.only=TRUE,
                           maxGap.between.oc.and.gh=5000, ocExpansion=100,
-                          chrom=NA, start=NA, end=NA){
+                          chrom=NA, start=NA, end=NA, motifs=list(),
+                          meme.file.path=NA){
          if(!file.exists(targetGene))
              dir.create(targetGene)
          private$targetGene  <- targetGene
@@ -79,6 +82,11 @@ BigFimo = R6Class("BigFimo",
          private$chromosome=chrom
          private$loc.start=start
          private$loc.end=end
+         private$motifs <- motifs
+         private$meme.file.path <- "~/github/bigFimo/jaspar2022-human.meme"
+         if(!is.na(meme.file.path))
+            private$meme.file.path <- meme.file.path
+             
          private$tbl.gh <- self$queryGeneHancer()
 
          if(!is.na(private$loc.start)){
@@ -158,8 +166,9 @@ BigFimo = R6Class("BigFimo",
       #  are our standard choice
       #' @return nothing
     createMemeFile = function(){
-       meme.file <- "jaspar2022.meme"
-       private$motifs <- query(MotifDb, c("sapiens"), c("jaspar2022"))
+       meme.file <- private$meme.file.path
+       if(is.null(private$motifs))
+          private$motifs <- query(MotifDb, c("sapiens"), c("jaspar2022"))
        # meme.file <- "jaspar2018-hocomocoCore.meme"
        # private$motifs <- query(MotifDb, c("sapiens"), c("jaspar2018", "HOCOMOCOv11-core-A"))
        printf("--- exporting %d motifs to %s", length(private$motifs), meme.file)
@@ -278,6 +287,7 @@ BigFimo = R6Class("BigFimo",
       #' initiates one fimo processes per region file, each previously created
       #' @return nothing
     runMany = function(){
+       browser()
        script <-  switch(private$genome,
                          hg38="~/github/bigFimo/helpers/fimoProcess-hg38.R",
                          mm10="~/github/bigFimo/helpers/fimoProcess-mm10.R")
@@ -285,9 +295,13 @@ BigFimo = R6Class("BigFimo",
        for(fimoRegionsFile in private$fimoRegionsFileList){
            full.path <- file.path(private$targetGene, fimoRegionsFile)
            stopifnot(file.exists(full.path))
-           cmd <- sprintf("Rscript %s %s %s %10.8f",
+           cmd <- sprintf("Rscript %s %s %s %10.8f %s &",
                           script,
-                          private$targetGene, full.path, private$fimoThreshold)
+                          private$targetGene,
+                          full.path,
+                          private$fimoThreshold,
+                          private$meme.file.path
+                          )
            printf("cmd: %s", cmd)
            system(cmd, wait=FALSE)
            } # for i

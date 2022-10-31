@@ -1107,7 +1107,7 @@ test_b4galt3 <- function()
     checkTrue(all(tbl.fimo$end   <= end - 10))
     checkTrue(all(tbl.fimo$chrom == chrom))
     checkTrue(all(tbl.fimo$p.value <= fimo.pval.threshold))
-    checkEquals(nrow(tbl.fimo), 33)
+    checkTrue(nrow(tbl.fimo) > 20)
 
     viz <- FALSE
     if(viz){
@@ -1134,8 +1134,98 @@ test_b4galt3 <- function()
        displayTrack(igv, track)
        }
 
-
 } # test_b4galt3
+#---------------------------------------------------------------------------------------------------
+test_singleMotif_bigRegion <- function()
+{
+    message(sprintf("--- test_singleMotif_bigRegion"))
+
+    chrom <- "chr19"
+    start <-  42265300
+    end   <-  42275300
+
+    start <- 1
+    end <- 58617616 
+
+    span <- 1 + end - start
+    print(span)
+    targetGene <- "KLF1"   # not the target, but used for creating a directory
+
+    fimo.pval.threshold <- 1e-4
+
+      # BigFimo needs specified regions, as many as the processCount (or more)
+      # which can be fed to different processes to work on
+      # we start here without genomic regions created by ATAC-seq of GeneHancer
+      # so gin some up.
+
+    landmarks <- seq(from=start, to=end, length.out=4)
+    starts <- landmarks[1:3]
+    ends <- landmarks[2:4]
+    starts <- starts - 10
+    ends <- ends + 10
+
+    tbl.oc.faux <- data.frame(chrom=chrom, start=starts, end=ends, stringsAsFactors=FALSE)
+
+    if(file.exists(targetGene))
+        unlink(targetGene, recursive=TRUE)
+
+    require(MotifDb)
+    motifs <- query(MotifDb, c("sapiens",  "^KLF1$"), c("jaspar2022")) # , "hocomocov11-core-A"))
+    bf <-  BigFimo$new(targetGene=targetGene,
+                       genome="hg38",
+                       tbl.oc=tbl.oc.faux,
+                       processCount=3,
+                       fimoThreshold=fimo.pval.threshold,
+                       use.genehancer=FALSE,
+                       gh.elite.only=FALSE,
+                       maxGap.between.oc.and.gh=0,
+                       chrom=chrom, start=start, end=end,
+                       motifs=motifs,
+                       meme.file.path="klf1.meme")
+
+    bf$createMemeFile()
+    tbl.gh <- bf$get.tbl.gh()
+    checkEquals(nrow(tbl.gh), 0)
+
+    bf$calculateRegionsForFimo()
+    tbl.gh.oc <- bf$get.tbl.gh.oc()
+    checkEquals(dim(tbl.gh.oc), c(3, 3))
+
+    filenames.roi <- bf$createFimoTables()
+    checkEquals(length(filenames.roi), 3)
+    checkTrue(all(file.exists(file.path(targetGene, filenames.roi))))
+
+      #------------------------------------------------
+      # now run fimobatch on those three region files
+      #------------------------------------------------
+
+    bf$runMany()
+    completed <- FALSE
+    actual.processes.needed <- length(bf$getFimoRegionsFileList())
+
+    while(!completed){
+        file.count <- length(list.files(path=targetGene, pattern="^fimo.*"))
+        completed <- (file.count == actual.processes.needed)
+        if(!completed){
+            printf("waiting for completion: %d/%d", file.count, actual.processes.needed)
+            Sys.sleep(3)
+            }
+       } # while
+
+    printf("complete %d/%d", actual.processes.needed, actual.processes.needed)
+
+    result.files <- list.files(path=targetGene, pattern="^fimo.*")
+    checkEquals(length(result.files), actual.processes.needed)
+    tbls <- list()
+    for(file in result.files){
+       tbl <- get(load(file.path(targetGene, file)))
+       tbls[[file]] <- tbl
+       }
+    tbl.fimo <- do.call(rbind, tbls)
+    rownames(tbl.fimo) <- NULL
+
+
+} # test_singleMotif_bigRegion
 #---------------------------------------------------------------------------------------------------
 viz <- function()
 {

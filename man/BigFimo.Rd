@@ -9,22 +9,22 @@ An R6 Class to prepare for, and then run, multiple instances of FIMO.
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-new}{\code{BigFimo$new()}}
-\item \href{#method-queryGeneHancer}{\code{BigFimo$queryGeneHancer()}}
-\item \href{#method-get.tbl.gh}{\code{BigFimo$get.tbl.gh()}}
-\item \href{#method-get.tbl.gh.oc}{\code{BigFimo$get.tbl.gh.oc()}}
-\item \href{#method-createMemeFile}{\code{BigFimo$createMemeFile()}}
-\item \href{#method-calculateRegionsForFimo}{\code{BigFimo$calculateRegionsForFimo()}}
-\item \href{#method-createIndicesToDistributeTasks}{\code{BigFimo$createIndicesToDistributeTasks()}}
-\item \href{#method-createFimoTables}{\code{BigFimo$createFimoTables()}}
-\item \href{#method-getFimoRegionsFileList}{\code{BigFimo$getFimoRegionsFileList()}}
-\item \href{#method-runMany}{\code{BigFimo$runMany()}}
-\item \href{#method-clone}{\code{BigFimo$clone()}}
+\item \href{#method-BigFimo-new}{\code{BigFimo$new()}}
+\item \href{#method-BigFimo-queryGeneHancer}{\code{BigFimo$queryGeneHancer()}}
+\item \href{#method-BigFimo-get.tbl.gh}{\code{BigFimo$get.tbl.gh()}}
+\item \href{#method-BigFimo-get.tbl.gh.oc}{\code{BigFimo$get.tbl.gh.oc()}}
+\item \href{#method-BigFimo-createMemeFile}{\code{BigFimo$createMemeFile()}}
+\item \href{#method-BigFimo-calculateRegionsForFimo}{\code{BigFimo$calculateRegionsForFimo()}}
+\item \href{#method-BigFimo-createIndicesToDistributeTasks}{\code{BigFimo$createIndicesToDistributeTasks()}}
+\item \href{#method-BigFimo-createFimoTables}{\code{BigFimo$createFimoTables()}}
+\item \href{#method-BigFimo-getFimoRegionsFileList}{\code{BigFimo$getFimoRegionsFileList()}}
+\item \href{#method-BigFimo-runMany}{\code{BigFimo$runMany()}}
+\item \href{#method-BigFimo-clone}{\code{BigFimo$clone()}}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-new"></a>}}
-\if{latex}{\out{\hypertarget{method-new}{}}}
+\if{html}{\out{<a id="method-BigFimo-new"></a>}}
+\if{latex}{\out{\hypertarget{method-BigFimo-new}{}}}
 \subsection{Method \code{new()}}{
 Create a new BigFimo
 \subsection{Usage}{
@@ -40,7 +40,9 @@ Create a new BigFimo
   ocExpansion = 100,
   chrom = NA,
   start = NA,
-  end = NA
+  end = NA,
+  motifs = list(),
+  meme.file.path = NA
 )}\if{html}{\out{</div>}}
 }
 
@@ -70,6 +72,8 @@ Create a new BigFimo
 \item{\code{start}}{numeric optional fimo region, used rather than fimo & tbl.oc? default NA}
 
 \item{\code{end}}{numeric optional fimo region, used rather than fimo & tbl.oc? default NA}
+
+\item{\code{motifs}}{a list, default empty, or motifs obtained from querying MotifDb}
 }
 \if{html}{\out{</div>}}
 }
@@ -78,8 +82,8 @@ A new `BigFimo` object.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-queryGeneHancer"></a>}}
-\if{latex}{\out{\hypertarget{method-queryGeneHancer}{}}}
+\if{html}{\out{<a id="method-BigFimo-queryGeneHancer"></a>}}
+\if{latex}{\out{\hypertarget{method-BigFimo-queryGeneHancer}{}}}
 \subsection{Method \code{queryGeneHancer()}}{
 call the genehancer database on khaleesi
 \subsection{Usage}{
@@ -91,8 +95,8 @@ data.frame
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-get.tbl.gh"></a>}}
-\if{latex}{\out{\hypertarget{method-get.tbl.gh}{}}}
+\if{html}{\out{<a id="method-BigFimo-get.tbl.gh"></a>}}
+\if{latex}{\out{\hypertarget{method-BigFimo-get.tbl.gh}{}}}
 \subsection{Method \code{get.tbl.gh()}}{
 access to the previously extracted genehancer table
 \subsection{Usage}{
@@ -104,8 +108,8 @@ data.frame
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-get.tbl.gh.oc"></a>}}
-\if{latex}{\out{\hypertarget{method-get.tbl.gh.oc}{}}}
+\if{html}{\out{<a id="method-BigFimo-get.tbl.gh.oc"></a>}}
+\if{latex}{\out{\hypertarget{method-BigFimo-get.tbl.gh.oc}{}}}
 \subsection{Method \code{get.tbl.gh.oc()}}{
 access to the previously calculated overlap of genehancer and open chromatin tables
 \subsection{Usage}{
@@ -117,8 +121,8 @@ data.frame
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-createMemeFile"></a>}}
-\if{latex}{\out{\hypertarget{method-createMemeFile}{}}}
+\if{html}{\out{<a id="method-BigFimo-createMemeFile"></a>}}
+\if{latex}{\out{\hypertarget{method-BigFimo-createMemeFile}{}}}
 \subsection{Method \code{createMemeFile()}}{
 fimo needs a meme file with motifs of interest.  just jaspar2022 for now
 used to be (before june 2022)    jaspar2018 & hocomoco-core-A
@@ -131,8 +135,8 @@ nothing
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-calculateRegionsForFimo"></a>}}
-\if{latex}{\out{\hypertarget{method-calculateRegionsForFimo}{}}}
+\if{html}{\out{<a id="method-BigFimo-calculateRegionsForFimo"></a>}}
+\if{latex}{\out{\hypertarget{method-BigFimo-calculateRegionsForFimo}{}}}
 \subsection{Method \code{calculateRegionsForFimo()}}{
 find the overlap of oc with genehancer - but very generously
 any open chromatin within < maxGap.between.oc.and.gh (often 5000)
@@ -146,8 +150,8 @@ data.frame the overlap of open chromatin with genehancer
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-createIndicesToDistributeTasks"></a>}}
-\if{latex}{\out{\hypertarget{method-createIndicesToDistributeTasks}{}}}
+\if{html}{\out{<a id="method-BigFimo-createIndicesToDistributeTasks"></a>}}
+\if{latex}{\out{\hypertarget{method-BigFimo-createIndicesToDistributeTasks}{}}}
 \subsection{Method \code{createIndicesToDistributeTasks()}}{
 we want to partition the fimo regions equally across the approximate
 number of suggested processes.  this function returns a list of indices
@@ -170,8 +174,8 @@ list of integer vectors
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-createFimoTables"></a>}}
-\if{latex}{\out{\hypertarget{method-createFimoTables}{}}}
+\if{html}{\out{<a id="method-BigFimo-createFimoTables"></a>}}
+\if{latex}{\out{\hypertarget{method-BigFimo-createFimoTables}{}}}
 \subsection{Method \code{createFimoTables()}}{
 create one binary data.frame per process, splitting regions equally among them
 \subsection{Usage}{
@@ -183,8 +187,8 @@ character vector, the list of files containing the data.frames
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-getFimoRegionsFileList"></a>}}
-\if{latex}{\out{\hypertarget{method-getFimoRegionsFileList}{}}}
+\if{html}{\out{<a id="method-BigFimo-getFimoRegionsFileList"></a>}}
+\if{latex}{\out{\hypertarget{method-BigFimo-getFimoRegionsFileList}{}}}
 \subsection{Method \code{getFimoRegionsFileList()}}{
 the files listed here specify regions in which fimo will search
 \subsection{Usage}{
@@ -196,8 +200,8 @@ character vector
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-runMany"></a>}}
-\if{latex}{\out{\hypertarget{method-runMany}{}}}
+\if{html}{\out{<a id="method-BigFimo-runMany"></a>}}
+\if{latex}{\out{\hypertarget{method-BigFimo-runMany}{}}}
 \subsection{Method \code{runMany()}}{
 initiates one fimo processes per region file, each previously created
 \subsection{Usage}{
@@ -209,8 +213,8 @@ nothing
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-clone"></a>}}
-\if{latex}{\out{\hypertarget{method-clone}{}}}
+\if{html}{\out{<a id="method-BigFimo-clone"></a>}}
+\if{latex}{\out{\hypertarget{method-BigFimo-clone}{}}}
 \subsection{Method \code{clone()}}{
 The objects of this class are cloneable with this method.
 \subsection{Usage}{

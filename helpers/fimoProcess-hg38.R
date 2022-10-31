@@ -10,10 +10,13 @@ if(interactive()){
 } else {
     args <- commandArgs(trailingOnly=TRUE)
     printf("arg count: %d", length(args))
-    stopifnot(length(args) == 3)
+    stopifnot(length(args) >= 3)
     targetGene <- args[1]
     fimoRegionsFile <- args[2]
     fimo.threshold <- as.numeric(args[3])
+    meme.file <- "~/github/bigFimo/jaspar2022-human.meme"
+    if(length(args) == 4)
+       meme.file <- args[4]
     }
 
 printf("--- starting ~/github/bigFimo/R/fimoProcess.R")
@@ -25,7 +28,6 @@ tbl.regions <- get(load(fimoRegionsFile))
 printf("     %s, fimo region count: %d  threshold: %20.10f", targetGene, nrow(tbl.regions), fimo.threshold)
 
 if(nrow(tbl.regions) > 0){
-   meme.file <- "~/github/bigFimo/jaspar2022-human.meme"
    tbl.fimo <- fimoBatch(tbl.regions, matchThreshold=fimo.threshold, genomeName="hg38", pwmFile=meme.file)
    } # if section has gh+atac hits
 
