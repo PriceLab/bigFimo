@@ -1,0 +1,22 @@
+FROM pshannon/trenaprereqsdata:latest
+USER root
+RUN apt-get update
+RUN apt-get install libxml2-dev -y
+RUN apt-get -y install libmariadb-client-lgpl-dev -y
+RUN apt-get -y install libssl-dev -y
+RUN apt-get install libpq-dev -y
+RUN sudo apt-get install libpng-dev -y
+RUN sudo apt-get install zlib1g-dev -y
+COPY installTrenaCodePrequisites.R /home/trena
+USER trena
+COPY myRprofile /home/trena/.Rprofile
+WORKDIR /home/trena
+RUN R -f ./installTrenaCodePrequisites.R
+COPY packages/*gz ./
+RUN R CMD INSTALL --no-test-load -l ~/library MotifDb_1.24.1.tar.gz
+RUN R CMD INSTALL --no-test-load -l ~/library igvShiny_0.99.72.tar.gz
+RUN R CMD INSTALL --no-test-load -l ~/library cyjShiny_0.99.32.tar.gz
+RUN R CMD INSTALL --no-test-load -l ~/library trena_1.5.7.tar.gz
+RUN R CMD INSTALL --no-test-load -l ~/library trenaSGM_0.99.60.tar.gz
+USER root
+
