@@ -99,11 +99,11 @@ test_singleBigRegionUsage <- function()
       # overlap here is 60, with duplicates removed in later processing
       #-----------------------------------------------------------------
 
-    count <- 3    # number of processes, hence also number of genomic regions
+    processCount <- 3    # number of processes, hence also number of genomic regions
     half.overlap <- 30
-    landmarks <- seq(from=start, to=end, length.out=count+1)
-    starts <- landmarks[1:count]
-    ends <- landmarks[2:(count+1)]
+    landmarks <- seq(from=start, to=end, length.out=processCount+1)
+    starts <- landmarks[1:processCount]
+    ends <- landmarks[2:(processCount+1)]
     starts <- starts - half.overlap
     ends <- ends + half.overlap
     tbl.roi <- data.frame(chrom=chrom, start=starts, end=ends, stringsAsFactors=FALSE)
@@ -113,7 +113,7 @@ test_singleBigRegionUsage <- function()
 
     bf <-  BigFimo$new(targetGene,
                        tbl.oc=tbl.roi,  # not actually open chromatin - this includes all bases
-                       processCount=count,
+                       processCount=processCount,
                        fimoThreshold=1e-6,
                        use.genehancer=FALSE,
                        gh.elite.only=FALSE,
@@ -126,7 +126,7 @@ test_singleBigRegionUsage <- function()
    bf$createMemeFile()
    checkTrue(file.exists(meme.file))
 
-   checkEquals(length(filenames.roi), 3)
+   checkEquals(length(filenames.roi), processCount)
       # make sure these RData files, which will be read by a script that directly
       # runs FIMO, match the regions calculated above
    for(i in seq_len(length(filenames.roi))){
@@ -134,9 +134,13 @@ test_singleBigRegionUsage <- function()
        checkEquals(tbl.r, tbl.roi[i,])
        }
    bf$runMany()
-   Sys.sleep(30)
-   fimo.output.files.by.region <- list.files(path=targetGene, pattern=sprintf("^%s.*RData", targetGene))
-   checkEquals(length(fimo.output.files.by.region), 3)
+   bf$waitForCompletion(sleepInterval=1)
+
+   fimo.output.files.by.region <-
+              list.files(path=targetGene,
+                         pattern=sprintf("^fimo.%s.*RData", targetGene))
+
+   checkEquals(length(fimo.output.files.by.region), processCount)
    tbl.fimo <- bf$combineResults()
    checkEquals(colnames(tbl.fimo), c("chrom", "start", "end", "tf", "strand", "score",
                                      "p.value", "matched_sequence", "motif_id"))

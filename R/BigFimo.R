@@ -171,7 +171,7 @@ BigFimo = R6Class("BigFimo",
           private$motifs <- query(MotifDb, c("sapiens"), c("jaspar2022"))
        # meme.file <- "jaspar2018-hocomocoCore.meme"
        # private$motifs <- query(MotifDb, c("sapiens"), c("jaspar2018", "HOCOMOCOv11-core-A"))
-       printf("--- exporting %d motifs to %s", length(private$motifs), meme.file)
+       message(sprintf("--- exporting %d motifs to %s", length(private$motifs), meme.file))
        export(private$motifs, con=meme.file, format="meme")
        },
 
@@ -189,7 +189,7 @@ BigFimo = R6Class("BigFimo",
           }
        tbl.gh <- private$tbl.gh   # convenience
        private$regionSize <- with(tbl.gh, max(end) - min(start))
-       printf("   full genehancer region: %dk", round(private$regionSize/1000, digits=0))
+       message(sprintf("   full genehancer region: %dk", round(private$regionSize/1000, digits=0)))
        if(private$gh.elite.only)
           tbl.gh <- subset(tbl.gh, elite)
        if(!grepl("chr", tbl.gh$chrom[1]))
@@ -293,7 +293,7 @@ BigFimo = R6Class("BigFimo",
        script <-  switch(private$genome,
                          hg38=hg38.script,
                          mm10=mm10.script)
-       printf("---- starting %d processes", length(private$fimoRegionsFileList))
+       message(sprintf("---- starting %d processes", length(private$fimoRegionsFileList)))
        for(fimoRegionsFile in private$fimoRegionsFileList){
            full.path <- file.path(private$targetGene, fimoRegionsFile)
            stopifnot(file.exists(full.path))
@@ -304,10 +304,35 @@ BigFimo = R6Class("BigFimo",
                           private$fimoThreshold,
                           private$meme.file.path
                           )
-           printf("cmd: %s", cmd)
+           message(sprintf("cmd: %s", cmd))
            system(cmd, wait=FALSE)
            } # for i
-       },
+         message(sprintf("--- leaving runMany"))
+         },
+    #------------------------------------------------------------------------
+      #' @description
+      #' the output file count tells us when all runMany processes have completed
+      #' @param sleepInterval numeric the number of seconds to wait before next file count check
+      #' @return logical
+    waitForCompletion = function(sleepInterval=60){
+       done <- FALSE
+       while(!done){
+          fimo.output.files.by.region <-
+              list.files(path=private$targetGene,
+                         pattern=sprintf("^fimo.%s.*RData", private$targetGene))
+          file.count <- length(fimo.output.files.by.region)
+          message(sprintf("--- processes now complete: %d/%d",
+                          file.count, private$processCount))
+          if(file.count == private$processCount){
+             message(sprintf("%d BigFimo processes complete", file.count))
+             done <- TRUE
+           } else {
+               Sys.sleep(sleepInterval)
+               }
+          } # while !done
+       return(TRUE)
+       }, # waitForCompletion
+
     #------------------------------------------------------------------------
       #' @description
       #' runMany creates one output fimo results file for each region, which

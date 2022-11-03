@@ -19,6 +19,7 @@ An R6 Class to prepare for, and then run, multiple instances of FIMO.
 \item \href{#method-BigFimo-createFimoTables}{\code{BigFimo$createFimoTables()}}
 \item \href{#method-BigFimo-getFimoRegionsFileList}{\code{BigFimo$getFimoRegionsFileList()}}
 \item \href{#method-BigFimo-runMany}{\code{BigFimo$runMany()}}
+\item \href{#method-BigFimo-waitForCompletion}{\code{BigFimo$waitForCompletion()}}
 \item \href{#method-BigFimo-combineResults}{\code{BigFimo$combineResults()}}
 \item \href{#method-BigFimo-clone}{\code{BigFimo$clone()}}
 }
@@ -215,6 +216,26 @@ initiates one fimo processes per region file, each previously created
 
 \subsection{Returns}{
 nothing
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-BigFimo-waitForCompletion"></a>}}
+\if{latex}{\out{\hypertarget{method-BigFimo-waitForCompletion}{}}}
+\subsection{Method \code{waitForCompletion()}}{
+the output file count tells us when all runMany processes have completed
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{BigFimo$waitForCompletion(sleepInterval = 60)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{sleepInterval}}{numeric the number of seconds to wait before next file count check}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+logical
 }
 }
 \if{html}{\out{<hr>}}
