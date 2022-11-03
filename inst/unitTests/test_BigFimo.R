@@ -16,9 +16,10 @@ library(BigFimo)
 #----------------------------------------------------------------------------------------------------
 runTests <- function()
 {
-    test_ctor()
-    test_singleBigRegionUsage()
-
+   test_ctor()
+   test_singleSmallRegionUsage()
+   test_singleHugeRegionUsage()
+    
 } # runTests
 #---------------------------------------------------------------------------------------------------
 # BigFimo originally (and optionally, still) depended on genehancer to provide genomic regions with
@@ -79,9 +80,9 @@ test_ctor <- function()
 
 } # test_ctor
 #---------------------------------------------------------------------------------------------------
-test_singleBigRegionUsage <- function()
+test_singleSmallRegionUsage <- function()
 {
-    message(sprintf("--- test_singleBigRegionUsage"))
+    message(sprintf("--- test_singleSmallRegionUsage"))
 
     targetGene <- "ZBTB7A"
 
@@ -147,7 +148,92 @@ test_singleBigRegionUsage <- function()
    checkTrue(nrow(tbl.fimo) > 400)
    checkTrue(nrow(tbl.fimo) < 500)
 
-} # test_singleBigRegionUsage
+       #--------------------------------------------------
+       # make sure that FIMO matches start and end very close to
+       # the requested chromosomal coordinates
+       #--------------------------------------------------
+   checkTrue(abs(min(tbl.fimo$start) - start) < 100)
+   checkTrue(abs(max(tbl.fimo$end) - end) < 100)
+
+} # test_singleSmallRegionUsage
+#----------------------------------------------------------------------------------------------------
+test_singleHugeRegionUsage <- function()
+{
+    message(sprintf("--- test_singleHUGERegionUsage"))
+
+    targetGene <- "NDUFS2"
+
+    if(file.exists(targetGene)){
+       unlink(targetGene, recursive=TRUE)
+       }
+
+       # hg38, targetGene's chomLoc plus some upstream
+    chrom <- "chr1"
+    start <- 160660231
+    end   <- 161753478
+
+      #-----------------------------------------------------------------
+      # partition the target region into 3 slightly overlapping parts
+      # overlap here is 60, with duplicates removed in later processing
+      #-----------------------------------------------------------------
+
+    processCount <- 20    # number of processes, hence also number of genomic regions
+    half.overlap <- 30
+    landmarks <- seq(from=start, to=end, length.out=processCount+1)
+    starts <- landmarks[1:processCount]
+    ends <- landmarks[2:(processCount+1)]
+    starts <- starts - half.overlap
+    ends <- ends + half.overlap
+    tbl.roi <- data.frame(chrom=chrom, start=starts, end=ends, stringsAsFactors=FALSE)
+
+    motifs <- query(MotifDb, c("sapiens"), c("jaspar2022"))
+    meme.file <- file.path(targetGene, "motifs.meme")
+
+    bf <-  BigFimo$new(targetGene,
+                       tbl.oc=tbl.roi,  # not actually open chromatin - this includes all bases
+                       processCount=processCount,
+                       fimoThreshold=1e-4,
+                       use.genehancer=FALSE,
+                       gh.elite.only=FALSE,
+                       maxGap.between.oc.and.gh=NA,
+                       chrom=chrom, start=start, end=end,
+                       motifs=motifs,
+                       meme.file.path=meme.file)
+
+   filenames.roi <- bf$createFimoTables()
+   bf$createMemeFile()
+   checkTrue(file.exists(meme.file))
+
+   checkEquals(length(filenames.roi), processCount)
+      # make sure these RData files, which will be read by a script that directly
+      # runs FIMO, match the regions calculated above
+   for(i in seq_len(length(filenames.roi))){
+       tbl.r <- get(load(file.path(targetGene, filenames.roi[i])))
+       checkEquals(tbl.r, tbl.roi[i,])
+       }
+   bf$runMany()
+   bf$waitForCompletion(sleepInterval=10)
+
+   fimo.output.files.by.region <-
+              list.files(path=targetGene,
+                         pattern=sprintf("^fimo.%s.*RData", targetGene))
+
+   checkEquals(length(fimo.output.files.by.region), processCount)
+   tbl.fimo <- bf$combineResults()
+   checkEquals(colnames(tbl.fimo), c("chrom", "start", "end", "tf", "strand", "score",
+                                     "p.value", "matched_sequence", "motif_id"))
+   printf("tbl.fimo: %d nrows", nrow(tbl.fimo))
+   checkTrue(nrow(tbl.fimo) > 200000)
+   checkTrue(nrow(tbl.fimo) < 300000)
+
+       #--------------------------------------------------
+       # make sure that FIMO matches start and end very close to
+       # the requested chromosomal coordinates
+       #--------------------------------------------------
+   checkTrue(abs(min(tbl.fimo$start) - start) < 100)
+   checkTrue(abs(max(tbl.fimo$end) - end) < 100)
+
+} # test_singleHugeRegionUsage
 #----------------------------------------------------------------------------------------------------
 viz <- function()
 {
