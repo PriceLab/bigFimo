@@ -1,23 +1,30 @@
 IMG = bigfimo:03nov2022
+IMG2 = bigfimo2:03nov2022
+DOCKER = sudo docker
 
 default:
-	@echo targets: build bash 
+	@echo targets: build.[1|2] bash.[1|2]
 
-build:
-	docker build -t $(IMG) ./
+build.1:
+	$(DOCKER) build -t $(IMG) ./ -f Dockerfile.1
+
+build.2:
+	$(DOCKER) build -t $(IMG2) ./ -f Dockerfile.2
 
 buildNoCache:
-	docker build --no-cache -t $(IMG) ./
+	$(DOCKER) build --no-cache -t $(IMG) ./
 
-bash:
-	docker run -ti --rm $(IMG) bash
+bash.1:
+	$(DOCKER) run -ti --rm $(IMG) bash
+bash.2:
+	$(DOCKER) run -ti --rm $(IMG2) bash
 
 host.install:
 	R -f installTrenaPrequisites.R
 
 rstudio.bioc:
-	docker run -e PASSWORD=password -p 8787:8787 bioconductor/release_core2
+	$(DOCKER) run -e PASSWORD=password -p 8787:8787 bioconductor/release_core2
 
 rstudio.trena:
-	docker run -e PASSWORD=password -p 8787:8787 $(ING)
+	$(DOCKER) run -e PASSWORD=password -p 8787:8787 $(ING)
 

@@ -1,0 +1,12 @@
+FROM bigfimo:03nov2022
+ADD components/.bashrc /root/.bashrc
+ADD components/fimo /usr/local/bin/
+ADD components/fimoBatchTools.R /usr/local/scripts/
+ADD components/human-jaspar2018-hocomoco-swissregulon.meme /usr/local/data/
+ADD components/tbl.fimoBeforeColumnsFixes.RData /usr/local/data/
+#COPY components/installPrerequisitePackages.R /usr/local/scripts/
+#RUN R -f /usr/local/scripts/installPrerequisitePackages.R
+# CMD ["R", "-e", "shiny::runApp('/home/shiny/exploreBindingSites.R', port=3838, host='0.0.0.0')"]
+
+USER root
+
