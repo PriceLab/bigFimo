@@ -10,7 +10,6 @@ code.pkgs <- c("knitr",
                "R6"
                )
 
-github.pkgs <- c("PriceLab/ghdb", "PriceLab/BigFimo")
 
 for(code.pkg in code.pkgs){
    suppressWarnings(
@@ -20,3 +19,9 @@ for(code.pkg in code.pkgs){
    if(needed)
       biocGet(code.pkg)
    } # for
+
+library(devtools)
+github.pkgs <- c("PriceLab/ghdb", "PriceLab/BigFimo")
+for(pkg in github.pkgs){
+    install_github(pkg)
+    }

@@ -1,23 +1,20 @@
 library(RUnit)
 #----------------------------------------------------------------------------------------------------
-source("~/github/fimoService/batchMode/fimoBatchTools.R")
-# bach1 promoter: chr21:29,298,789-29,299,657
-
-if(interactive()){
-   targetGene <- "BACH1"
-   fimoRegionsFile <- "~/github/bigFimo/inst/extdata/BACH1.01.fimoRegions-00008.RData"
-   fimo.threshold <- 1e-6
-} else {
-    args <- commandArgs(trailingOnly=TRUE)
-    printf("arg count: %d", length(args))
-    stopifnot(length(args) >= 3)
-    targetGene <- args[1]
-    fimoRegionsFile <- args[2]
-    fimo.threshold <- as.numeric(args[3])
-    meme.file <- "~/github/bigFimo/jaspar2022-human.meme"
-    if(length(args) == 4)
-       meme.file <- args[4]
+if(Sys.info()[["nodename"]] %in% c("hagfish.local", "khaleesi.systemsbiology.net")){
+    source("~/github/fimoService/batchMode/fimoBatchTools.R")
+} else { # assume this is a properly configured docker
+    source("/usr/local/scripts/fimoBatchTools.R")
     }
+
+args <- commandArgs(trailingOnly=TRUE)
+printf("arg count: %d", length(args))
+stopifnot(length(args) >= 3)
+targetGene <- args[1]
+fimoRegionsFile <- args[2]
+fimo.threshold <- as.numeric(args[3])
+meme.file <- "~/github/bigFimo/jaspar2022-human.meme"
+if(length(args) == 4)
+   meme.file <- args[4]
 
 printf("--- starting ~/github/bigFimo/R/fimoProcess.R")
 printf("    fimoRegionsFile: %s", fimoRegionsFile)
