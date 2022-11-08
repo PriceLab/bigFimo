@@ -3,7 +3,7 @@ IMG2 = bigfimo2:03nov2022
 DOCKER = sudo docker
 
 default:
-	@echo targets: build.[1|2] bash.[1|2]
+	@echo targets: build.1,2 bash.1,2
 
 build.1:
 	$(DOCKER) build -t $(IMG) ./ -f Dockerfile.1

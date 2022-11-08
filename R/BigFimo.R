@@ -17,7 +17,12 @@
 #' @export
 #'
 #----------------------------------------------------------------------------------------------------
-source("~/github/fimoService/batchMode/fimoBatchTools.R")
+if(Sys.info()[["nodename"]] %in% c("hagfish.local", "khaleesi.systemsbiology.net")){
+    source("~/github/fimoService/batchMode/fimoBatchTools.R")
+} else { # assume this is a properly configured docker
+    source("/usr/local/scripts/fimoBatchTools.R")
+    }
+
 #----------------------------------------------------------------------------------------------------
 BigFimo = R6Class("BigFimo",
     #--------------------------------------------------------------------------------
