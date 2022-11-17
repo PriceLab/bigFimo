@@ -71,7 +71,7 @@ BigFimo = R6Class("BigFimo",
                           use.genehancer=TRUE, gh.elite.only=TRUE,
                           maxGap.between.oc.and.gh=5000, ocExpansion=100,
                           chrom=NA, start=NA, end=NA, motifs=list(),
-                          meme.file.path){
+                          meme.file.path=NA){
          if(!file.exists(targetGene))
              dir.create(targetGene)
          private$targetGene  <- targetGene
@@ -171,14 +171,14 @@ BigFimo = R6Class("BigFimo",
       #  are our standard choice
       #' @return nothing
     createMemeFile = function(){
-       meme.file <- private$meme.file.path
-       if(is.null(private$motifs))
+       if(is.null(private$meme.file.path)){
           private$motifs <- query(MotifDb, c("sapiens"), c("jaspar2022"))
-       # meme.file <- "jaspar2018-hocomocoCore.meme"
-       # private$motifs <- query(MotifDb, c("sapiens"), c("jaspar2018", "HOCOMOCOv11-core-A"))
-       message(sprintf("--- exporting %d motifs to %s", length(private$motifs), meme.file))
-       export(private$motifs, con=meme.file, format="meme")
-       },
+          private$meme.file.path < "bigfimo.meme"  # our default, reused each time
+          message(sprintf("--- exporting %d motifs to %s", length(private$motifs),
+                          private$meme.file.path))
+          export(private$motifs, con=private$meme.file.path, format="meme")
+          } # if no meme.file.path provided
+       },  # createMemeFile
 
     #------------------------------------------------------------------------
       #' @description
@@ -358,6 +358,7 @@ BigFimo = R6Class("BigFimo",
        new.order <- order(tbl.fimo$start, decreasing=FALSE)
        tbl.fimo <- tbl.fimo[new.order,]
        tbl.fimo <- unique(tbl.fimo)
+       rownames(tbl.fimo) <- NULL
        invisible(tbl.fimo)
        } # combineResults
     #------------------------------------------------------------------------
@@ -365,3 +366,35 @@ BigFimo = R6Class("BigFimo",
 
 ) # class BigFimo
 #--------------------------------------------------------------------------------
+#' given chrom, start, end, and a number of regions, subdivide with overlaps
+#'
+#' @param chrom character chromosome
+#' @param start numeric of region
+#' @param end numeric of region
+#' @param count numeric the number to calculate
+#' @param overlap numeric of neighboring regions, also used to extend start and end
+#'
+#' @return a data.frame (chrom, start, end, size) of approximately equal count regions
+#'
+#' @export
+#'
+#' @aliases subdivideGenomicRegion
+#' @rdname subdivideGenomicRegion
+#'
+subdivideGenomicRegion <- function(chrom, start, end, count, overlap)
+{
+    
+    half.overlap <- as.integer(overlap/2)  # put half backwards, half forward
+    landmarks <- seq(from=start, to=end, length.out=count+1)
+    starts <- round(landmarks[1:count])
+    ends <- round(landmarks[2:(count+1)])
+    starts <- starts - half.overlap
+    ends <- ends + half.overlap
+    tbl.roi <- data.frame(chrom=chrom, start=starts, end=ends, stringsAsFactors=FALSE)
+    tbl.roi$size <- with(tbl.roi, 1 + end - start)
+
+    tbl.roi
+
+} # subdivideGenomicRegion
+#----------------------------------------------------------------------------------------------------
+

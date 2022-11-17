@@ -19,6 +19,13 @@ printf <- function(...) print(noquote(sprintf(...)))
 runTests <- function()
 {
    test_ctor()
+
+   test_subdivideRegion_1()
+   test_subdivideRegion_2()
+   test_subdivideRegion_3()
+   test_subdivideRegion_10()
+   test_subdivideBigRegion_30()
+
    test_singleSmallRegionUsage()
    test_singleHugeRegionUsage()
     
@@ -82,6 +89,164 @@ test_ctor <- function()
 
 } # test_ctor
 #---------------------------------------------------------------------------------------------------
+# typical use proceeds by dividing a large genomic region into slightly overlapping
+# subregions, running fimo independently on each region, then combining and uniquing
+# the results.   test here our ability to reliably and reproducibly subdivide 
+# a big region
+test_subdivideRegion_1 <- function()
+{
+    message(sprintf("--- test_subdivideRegion_1"))
+
+         #------------------------------------------------
+         # just one small region, no subdivision to start
+         #------------------------------------------------
+
+    chrom <- "chr1"
+    start <- 100
+    end <- 200
+    number.of.regions <- 1
+    overlap <- 30
+    half.overlap <- as.integer(overlap/2)
+
+    tbl.roi <- subdivideGenomicRegion(chrom, start, end, 1, overlap)
+    checkEquals(tbl.roi$chrom, chrom)
+    checkEquals(tbl.roi$start, start - half.overlap)
+    checkEquals(tbl.roi$end, end + half.overlap)
+    checkEquals(tbl.roi$size, (2 * half.overlap) + 1 + end - start)
+
+} # test_subdivideRegion_1
+#----------------------------------------------------------------------------------------------------
+test_subdivideRegion_2 <- function()
+{
+    message(sprintf("--- test_subdivideRegion_2"))
+
+         #------------------------------------------------
+         # just one small region, 2 subdivisions
+         #------------------------------------------------
+
+    chrom <- "chr1"
+    start <- 100
+    end <- 200
+    number.of.regions <- 2
+    overlap <- 30
+    half.overlap <- as.integer(overlap/2)
+
+    tbl.roi <-
+        subdivideGenomicRegion(chrom, start, end, number.of.regions, overlap)
+
+    checkEquals(nrow(tbl.roi), number.of.regions)
+    checkEquals(tbl.roi$chrom, rep(chrom, number.of.regions))
+
+        #------------------------------------------------------------
+        # use reduce(GRanges): is the entire ranged plus shoulders, 
+        # covered in one row?
+        #------------------------------------------------------------
+
+    tbl.reduced <- as.data.frame(reduce(GRanges(tbl.roi)))
+    checkEquals(nrow(tbl.reduced), 1)
+    expected.span <- (2 * half.overlap) + 1 + end - start
+    checkEquals(tbl.reduced$width, expected.span)
+    checkEquals(tbl.roi$size, c(81, 81))
+
+} # test_subdivideRegion_2
+#---------------------------------------------------------------------------------------------------
+test_subdivideRegion_3 <- function()
+{
+    message(sprintf("--- test_subdivideRegion_3"))
+
+         #------------------------------------------------
+         # just one small region, 3 subdivisions
+         #------------------------------------------------
+
+    chrom <- "chr1"
+    start <- 100
+    end <- 200
+    number.of.regions <- 3
+    overlap <- 30
+    half.overlap <- as.integer(overlap/2)
+
+    tbl.roi <-
+        subdivideGenomicRegion(chrom, start, end, number.of.regions, overlap)
+
+    checkEquals(nrow(tbl.roi), number.of.regions)
+    checkEquals(tbl.roi$chrom, rep(chrom, number.of.regions))
+
+        #------------------------------------------------------------
+        # use reduce(GRanges): is the entire ranged plus shoulders, 
+        # covered in one row?
+        #------------------------------------------------------------
+
+    tbl.reduced <- as.data.frame(reduce(GRanges(tbl.roi)))
+    checkEquals(nrow(tbl.reduced), 1)
+    expected.span <- (2 * half.overlap) + 1 + end - start
+    checkEquals(tbl.reduced$width, expected.span)
+    checkEquals(tbl.roi$size, c(64, 65, 64))
+
+} # test_subdivideRegion_3
+#---------------------------------------------------------------------------------------------------
+test_subdivideRegion_10 <- function()
+{
+    message(sprintf("--- test_subdivideRegion_10"))
+
+    chrom <- "chr1"
+    start <- 100
+    end <- 200
+    number.of.regions <- 10
+    overlap <- 0
+    half.overlap <- as.integer(overlap/2)
+
+    tbl.roi <-
+        subdivideGenomicRegion(chrom, start, end, number.of.regions, overlap)
+
+    checkEquals(nrow(tbl.roi), number.of.regions)
+    checkEquals(tbl.roi$chrom, rep(chrom, number.of.regions))
+
+        #------------------------------------------------------------
+        # use reduce(GRanges): is the entire ranged plus shoulders, 
+        # covered in one row?
+        #------------------------------------------------------------
+
+    tbl.reduced <- as.data.frame(reduce(GRanges(tbl.roi)))
+    checkEquals(nrow(tbl.reduced), 1)
+    expected.span <- (2 * half.overlap) + 1 + end - start
+    checkEquals(tbl.reduced$width, expected.span)
+    checkEquals(tbl.roi$size, rep(11, number.of.regions))
+
+} # test_subdivideRegion_10
+#---------------------------------------------------------------------------------------------------
+test_subdivideBigRegion_30 <- function()
+{
+    message(sprintf("--- test_subdivideBigRegion_30"))
+
+    targetGene <- "ZBTB7A"   # not actually used here, just for explanation
+    chrom <- "chr19"
+    tss <- 4066900
+    start <- tss - 1e6
+    end   <- tss + 1e6
+    number.of.regions <- 30
+    overlap <- 100
+    half.overlap <- as.integer(overlap/2)
+
+    tbl.roi <-
+        subdivideGenomicRegion(chrom, start, end, number.of.regions, overlap)
+
+    checkEquals(nrow(tbl.roi), number.of.regions)
+    checkEquals(tbl.roi$chrom, rep(chrom, number.of.regions))
+
+        #------------------------------------------------------------
+        # use reduce(GRanges): is the entire ranged plus shoulders, 
+        # covered in one row?
+        #------------------------------------------------------------
+
+    tbl.reduced <- as.data.frame(reduce(GRanges(tbl.roi)))
+    checkEquals(nrow(tbl.reduced), 1)
+    expected.span <- (2 * half.overlap) + 1 + end - start
+    checkEquals(tbl.reduced$width, expected.span)
+    region.sizes <- tbl.roi$size
+    checkTrue(all(region.sizes >= 66767 & region.sizes <= 66768))
+
+} # test_subdivideBigRegion_30
+#---------------------------------------------------------------------------------------------------
 test_singleSmallRegionUsage <- function()
 {
     message(sprintf("--- test_singleSmallRegionUsage"))
@@ -95,30 +260,34 @@ test_singleSmallRegionUsage <- function()
        # hg38, targetGene's chomLoc plus some upstream
     chrom <- "chr19"
     start <- 4040801
-    end <- 4077194
+    end   <- 4077194
+    processCount <- 3    # number of processes, hence also number of genomic regions
+    number.of.regions <- processCount
 
       #-----------------------------------------------------------------
       # partition the target region into 3 slightly overlapping parts
       # overlap here is 60, with duplicates removed in later processing
       #-----------------------------------------------------------------
+    overlap <- 100
+    half.overlap <- as.integer(overlap/2)
+    tbl.roi <-
+        subdivideGenomicRegion(chrom, start, end, number.of.regions, overlap)
 
-    processCount <- 3    # number of processes, hence also number of genomic regions
-    half.overlap <- 30
-    landmarks <- seq(from=start, to=end, length.out=processCount+1)
-    starts <- landmarks[1:processCount]
-    ends <- landmarks[2:(processCount+1)]
-    starts <- starts - half.overlap
-    ends <- ends + half.overlap
-    tbl.roi <- data.frame(chrom=chrom, start=starts, end=ends, stringsAsFactors=FALSE)
-
+       # quick sanity check: just one row, span slightly larger than requested
+    tbl.reduced <- as.data.frame(reduce(GRanges(tbl.roi)))
+    checkEqualsNumeric(tbl.reduced$width/(1+end-start), 1.0, tol=1e-2)
+    checkTrue(tbl.reduced$width/(1+end-start) > 1)
+    
     motifs <- query(MotifDb, c("sapiens"), c("jaspar2022"))
     meme.file <- file.path(targetGene, "motifs.meme")
+    meme.file <- "motifs.meme"
+    rtracklayer::export(motifs, con=meme.file, format="meme")
 
     bf <-  BigFimo$new(targetGene,
                        tbl.oc=tbl.roi,  # not actually open chromatin - this includes all bases
                        processCount=processCount,
-                       fimoThreshold=1e-6,
-                       use.genehancer=FALSE,
+                       fimoThreshold=1e-6, 
+                      use.genehancer=FALSE,
                        gh.elite.only=FALSE,
                        maxGap.between.oc.and.gh=NA,
                        chrom=chrom, start=start, end=end,
@@ -126,7 +295,7 @@ test_singleSmallRegionUsage <- function()
                        meme.file.path=meme.file)
 
    filenames.roi <- bf$createFimoTables()
-   bf$createMemeFile()
+   #bf$createMemeFile()
    checkTrue(file.exists(meme.file))
 
    checkEquals(length(filenames.roi), processCount)
@@ -180,16 +349,23 @@ test_singleHugeRegionUsage <- function()
       #-----------------------------------------------------------------
 
     processCount <- 20    # number of processes, hence also number of genomic regions
-    half.overlap <- 30
-    landmarks <- seq(from=start, to=end, length.out=processCount+1)
-    starts <- landmarks[1:processCount]
-    ends <- landmarks[2:(processCount+1)]
-    starts <- starts - half.overlap
-    ends <- ends + half.overlap
-    tbl.roi <- data.frame(chrom=chrom, start=starts, end=ends, stringsAsFactors=FALSE)
+    number.of.regions <- processCount
+    overlap <- 60
+    half.overlap <- as.integer(overlap/2)
+
+    tbl.roi <-
+        subdivideGenomicRegion(chrom, start, end, number.of.regions, overlap)
+
+    tbl.reduced <- as.data.frame(reduce(GRanges(tbl.roi)))
+    checkEquals(nrow(tbl.reduced), 1)  # ensures we have continuous coverage
+    checkEqualsNumeric(tbl.reduced$width/(1+end-start), 1.0, tol=1e-2)
+      # tbl.roi should cover just a bit more than requested
+    checkTrue(tbl.reduced$width/(1+end-start) > 1)
+    checkTrue(tbl.reduced$width/(1+end-start) < 1.01)
 
     motifs <- query(MotifDb, c("sapiens"), c("jaspar2022"))
-    meme.file <- file.path(targetGene, "motifs.meme")
+    meme.file <- "motifs.meme"
+    rtracklayer::export(motifs, con=meme.file, format="meme")
 
     bf <-  BigFimo$new(targetGene,
                        tbl.oc=tbl.roi,  # not actually open chromatin - this includes all bases
@@ -203,7 +379,6 @@ test_singleHugeRegionUsage <- function()
                        meme.file.path=meme.file)
 
    filenames.roi <- bf$createFimoTables()
-   bf$createMemeFile()
    checkTrue(file.exists(meme.file))
 
    checkEquals(length(filenames.roi), processCount)

@@ -44,7 +44,7 @@ Create a new BigFimo
   start = NA,
   end = NA,
   motifs = list(),
-  meme.file.path
+  meme.file.path = NA
 )}\if{html}{\out{</div>}}
 }
 
