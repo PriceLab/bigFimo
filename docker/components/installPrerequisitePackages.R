@@ -22,3 +22,10 @@ for(code.pkg in code.pkgs){
    if(needed)
       biocGet(code.pkg)
    } # for
+
+
+library(devtools)
+github.pkgs <- c("PriceLab/ghdb")
+for(pkg in github.pkgs){
+    install_github(pkg)
+    }

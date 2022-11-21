@@ -10,7 +10,6 @@ code.pkgs <- c("knitr",
                "R6"
                )
 
-
 for(code.pkg in code.pkgs){
    suppressWarnings(
       needed <- !require(code.pkg, character.only=TRUE, lib.loc=my.user.library, quiet=TRUE)
@@ -21,7 +20,7 @@ for(code.pkg in code.pkgs){
    } # for
 
 library(devtools)
-github.pkgs <- c("PriceLab/ghdb", "PriceLab/BigFimo")
+github.pkgs <- c("PriceLab/BigFimo")
 for(pkg in github.pkgs){
     install_github(pkg)
     }
