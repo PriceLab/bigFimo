@@ -60,7 +60,7 @@ fimo.output.files.by.region <-
                       pattern=sprintf("^fimo.%s.*RData", targetGene))
 tbl.fimo <- bf$combineResults()
 printf("tbl.fimo: %d nrows", nrow(tbl.fimo))
-out.filename <- sprintf("tbl.fimo.%s.%s.RData", targetGene, chromLocFile)
+out.filename <- sprintf("tbl.fimo.%s.RData", targetGene)
 out.filepath <- file.path(output.directory, out.filename)
 printf("saving %d hits to %s", nrow(tbl.fimo), out.filepath)
 save(tbl.fimo, file=out.filepath)

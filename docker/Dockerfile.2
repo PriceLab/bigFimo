@@ -10,6 +10,8 @@ COPY components/installPrerequisitePackages-2.R /usr/local/scripts/
 COPY components/test_BigFimoPackage.R /usr/local/scripts/
 COPY components/runBigFimo.R /usr/local/scripts/
 COPY components/runBigFimoFromFile.R /usr/local/scripts/
+COPY components/runBigFimoWithChromLocsTable.R /usr/local/scripts/
+COPY components/pilraMicro.csv /usr/local/data
 COPY components/demoRunRScript.bash /usr/local/scripts/
 RUN R -f /usr/local/scripts/installPrerequisitePackages-2.R
 

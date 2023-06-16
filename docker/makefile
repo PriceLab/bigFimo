@@ -61,3 +61,12 @@ test.rscript.in.container.huge:
 	      /usr/local/data/human-jaspar2022-hocomoco-core-A.meme \
               /usr/local/data/results								
 
+test.rscript.withChromLocTable:
+	$(DOCKER) run -v /users/pshannon/github/bigFimo/docker/results:/usr/local/data/results -ti $(IMG2) \
+	  Rscript /usr/local/scripts/runBigFimoWithChromLocsTable.R \
+              /usr/local/data/pilraMicro.csv \
+              PILRA \
+              5 \
+              1e-5 \
+	      /usr/local/data/human-jaspar2022-hocomoco-core-A.meme \
+              /usr/local/data/results								
