@@ -1,38 +1,40 @@
 library(BigFimo)
 library(MotifDb)
+library(yaml)
 
-printf <- function(...) print(noquote(sprintf(...)))
+printf <- function(...) print(noquote(sprintf(...)))  # basic utility
 
-if(interactive()){   # for testing only
-    args <- c("chr19",
-              "4040801",
-              "4041801",
-              "ZBTB7A",
-              "1",
-              "1e-5",
-              "motifs.meme",
-              "./")
-    args <- c("chr1",
-              "161200670",
-              "161204670",
-              "NDUFS2",
-              "1",
-              "1e-5",
-              "human-jaspar2018-hocomoco-swissregulon.meme",
-              "./")
-   }else{
-      args <- commandArgs(trailingOnly=TRUE)
-      }
+yaml.input.directory <- "/usr/local/data/inputs"
+if(interactive())
+    yaml.input.directory <- "./"
 
-stopifnot(length(args) == 8)
-chrom <- args[1]
-start <- as.numeric(args[2])
-end <- as.numeric(args[3])
-targetGene <- args[4]
-processCount <- as.numeric(args[5])
-fimo.pval.threshold <- as.numeric(args[6])
-meme.file.path <- args[7]
-output.directory <- args[8]
+yaml.file.path <- file.path(yaml.input.directory, "bigFimo.yaml")
+printf("looking for yaml configuration file here: %s", yaml.file.path)
+stopifnot(file.exists(yaml.file.path))
+
+args <- yaml.load(readLines(yaml.file.path))
+
+
+chrom <- args$chrom
+start <- args$start
+end <- args$end
+targetGene <- args$targetGene
+processCount <- args$processCount
+fimo.pval.threshold <- as.numeric(args$fimo.pval.threshold)
+meme.file.path <- args$meme.file.path
+output.directory <- args$output.directory
+
+printf("%30s: %s", "chrom", chrom)
+printf("%30s: %d", "start", start)
+printf("%30s: %d", "end", end)
+printf("%30s: %s", "targetGene", targetGene)
+printf("%30s: %d", "processCount", processCount)
+printf("%30s: %f", "fimo.pval.threshold", fimo.pval.threshold)
+printf("%30s: %s", "meme.file.path", meme.file.path)
+printf("%30s: %s", "output.directory", output.directory)
+
+stopifnot(file.exists(meme.file.path))
+stopifnot(file.exists(output.directory))
 
 if(file.exists(targetGene)) {
     unlink(targetGene, recursive=TRUE)

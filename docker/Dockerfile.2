@@ -1,16 +1,17 @@
 FROM bigfimobase
+RUN mkdir /usr/local/data/inputs
 RUN mkdir /usr/local/data/results
 ADD components/.bashrc /root/.bashrc
 ADD components/fimo /usr/local/bin/
 ADD components/fimoBatchTools.R /usr/local/scripts/
-ADD components/human-jaspar2018-hocomoco-swissregulon.meme /usr/local/data/
+ADD components/human-jaspar2022-hocomoco-core-A.meme /usr/local/data/
 ADD components/tbl.fimoBeforeColumnsFixes.RData /usr/local/data/
 COPY components/installPrerequisitePackages-2.R /usr/local/scripts/
 COPY components/test_BigFimoPackage.R /usr/local/scripts/
 COPY components/runBigFimo.R /usr/local/scripts/
+COPY components/runBigFimoFromFile.R /usr/local/scripts/
 COPY components/demoRunRScript.bash /usr/local/scripts/
 RUN R -f /usr/local/scripts/installPrerequisitePackages-2.R
-# CMD ["R", "-e", "shiny::runApp('/home/shiny/exploreBindingSites.R', port=3838, host='0.0.0.0')"]
 
 USER root
 

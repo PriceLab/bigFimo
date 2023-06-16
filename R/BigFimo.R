@@ -328,7 +328,7 @@ BigFimo = R6Class("BigFimo",
           file.count <- length(fimo.output.files.by.region)
           message(sprintf("--- processes now complete: %d/%d",
                           file.count, private$processCount))
-          if(file.count == private$processCount){
+          if(file.count >= private$processCount){
              message(sprintf("%d BigFimo processes complete", file.count))
              done <- TRUE
            } else {
@@ -346,7 +346,7 @@ BigFimo = R6Class("BigFimo",
     combineResults = function(){
        fimo.output.files <- list.files(path=private$targetGene,
                                        pattern=sprintf("^fimo.%s.*RData", private$targetGene))
-       stopifnot(length(fimo.output.files) == private$processCount)
+       # stopifnot(length(fimo.output.files) == private$processCount)
        tbls <- list()
        f <- 0
        for(file in fimo.output.files){

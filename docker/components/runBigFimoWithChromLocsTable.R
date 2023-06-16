@@ -4,43 +4,34 @@ library(MotifDb)
 printf <- function(...) print(noquote(sprintf(...)))
 
 if(interactive()){   # for testing only
-    args <- c("chr19",
-              "4040801",
-              "4041801",
-              "ZBTB7A",
-              "1",
+    args <- c("pilraMicro.csv",
+              "PILRA",
+              "5",
               "1e-5",
-              "motifs.meme",
-              "./")
-    args <- c("chr1",
-              "161200670",
-              "161204670",
-              "NDUFS2",
-              "1",
-              "1e-5",
-              "human-jaspar2018-hocomoco-swissregulon.meme",
+              "human-jaspar2022-hocomoco-core-A.meme",
               "./")
    }else{
       args <- commandArgs(trailingOnly=TRUE)
       }
 
-stopifnot(length(args) == 8)
-chrom <- args[1]
-start <- as.numeric(args[2])
-end <- as.numeric(args[3])
-targetGene <- args[4]
-processCount <- as.numeric(args[5])
-fimo.pval.threshold <- as.numeric(args[6])
-meme.file.path <- args[7]
-output.directory <- args[8]
+stopifnot(length(args) == 6)
+chromLocFile <- args[1]
+stopifnot(file.exists(chromLocFile))
+targetGene <- args[2]
+processCount <- as.numeric(args[3])
+fimo.pval.threshold <- as.numeric(args[4])
+meme.file.path <- args[5]
+output.directory <- args[6]
 
 if(file.exists(targetGene)) {
     unlink(targetGene, recursive=TRUE)
     }            
 
-span <- 1 + end - start
-printf("running bigFimo across %5.2fk", span/1000)
-tbl.roi <- subdivideGenomicRegion(chrom, start, end, processCount, overlap=60)
+
+tbl.roi <- read.table(chromLocFile, sep="\t", as.is=TRUE)
+if(colnames(tbl.roi)[1] != "chrom")
+    colnames(tbl.roi) <- c("chrom", "start", "end")
+
 stopifnot(file.exists(meme.file.path))
 gh.elite.only <- FALSE
 maxGap.between.oc.and.gh <- 0
@@ -52,7 +43,9 @@ bf <-  BigFimo$new(targetGene=targetGene,
                    use.genehancer=FALSE,
                    gh.elite.only=FALSE,
                    maxGap.between.oc.and.gh=0,
-                   chrom=chrom, start=start, end=end,
+                   chrom=tbl.roi$chrom[1],
+                   start=min(tbl.roi$start),
+                   end=max(tbl.roi$end),
                    meme.file.path=meme.file.path)
 
 filenames.roi <- bf$createFimoTables()
@@ -67,7 +60,7 @@ fimo.output.files.by.region <-
                       pattern=sprintf("^fimo.%s.*RData", targetGene))
 tbl.fimo <- bf$combineResults()
 printf("tbl.fimo: %d nrows", nrow(tbl.fimo))
-out.filename <- sprintf("tbl.fimo.%s.%s:%d-%d.RData", targetGene, chrom, start, end)
+out.filename <- sprintf("tbl.fimo.%s.%s.RData", targetGene, chromLocFile)
 out.filepath <- file.path(output.directory, out.filename)
 printf("saving %d hits to %s", nrow(tbl.fimo), out.filepath)
 save(tbl.fimo, file=out.filepath)

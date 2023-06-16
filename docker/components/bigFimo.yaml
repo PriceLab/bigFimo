@@ -1,0 +1,8 @@
+chrom: "chr1"
+start: 4040801
+end: 4041801
+targetGene: "ZBTB7A"
+processCount: 2
+fimo.pval.threshold: 1e-5
+meme.file.path: "/usr/local/data/human-jaspar2018-hocomoco-swissregulon.meme"
+output.directory: "./"
