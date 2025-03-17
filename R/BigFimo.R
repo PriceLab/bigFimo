@@ -299,6 +299,8 @@ BigFimo = R6Class("BigFimo",
                          hg38=hg38.script,
                          mm10=mm10.script)
        message(sprintf("---- starting %d processes", length(private$fimoRegionsFileList)))
+       printf("--- running fimoPocess script: %s",
+              script)
        for(fimoRegionsFile in private$fimoRegionsFileList){
            full.path <- file.path(private$targetGene, fimoRegionsFile)
            stopifnot(file.exists(full.path))
@@ -355,9 +357,11 @@ BigFimo = R6Class("BigFimo",
           tbls[[f]] <- tbl.fimo
           } # for
        tbl.fimo <- do.call(rbind, tbls)
-       new.order <- order(tbl.fimo$start, decreasing=FALSE)
-       tbl.fimo <- tbl.fimo[new.order,]
-       tbl.fimo <- unique(tbl.fimo)
+       if(nrow(tbl.fimo) > 1){
+          new.order <- order(tbl.fimo$start, decreasing=FALSE)
+          tbl.fimo <- tbl.fimo[new.order,]
+          tbl.fimo <- unique(tbl.fimo)
+          }
        rownames(tbl.fimo) <- NULL
        invisible(tbl.fimo)
        } # combineResults

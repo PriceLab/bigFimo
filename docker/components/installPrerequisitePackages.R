@@ -11,6 +11,7 @@ code.pkgs <- c("RUnit",
                "org.Hs.eg.db",
                "BSgenome.Hsapiens.UCSC.hg38",
                "Biostrings",
+               "RPostgreSQL",
                "MotifDb"
                )
 

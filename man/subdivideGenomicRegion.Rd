@@ -4,7 +4,7 @@
 \alias{subdivideGenomicRegion}
 \title{given chrom, start, end, and a number of regions, subdivide with overlaps}
 \usage{
-subdivideGenomicRegion(chrom, start, end, count, overlap = 30)
+subdivideGenomicRegion(chrom, start, end, count, overlap)
 }
 \arguments{
 \item{chrom}{character chromosome}

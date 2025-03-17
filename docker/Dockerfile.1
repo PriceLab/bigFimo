@@ -1,4 +1,4 @@
-FROM bioconductor/bioconductor_docker:devel
+FROM bioconductor/bioconductor_docker:RELEASE_3_20
 ADD components/.bashrc /root/.bashrc
 ADD components/fimo /usr/local/bin/
 RUN mkdir /usr/local/scripts

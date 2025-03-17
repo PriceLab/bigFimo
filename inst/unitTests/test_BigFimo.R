@@ -19,6 +19,10 @@ printf <- function(...) print(noquote(sprintf(...)))
 runTests <- function()
 {
    test_ctor()
+   test_fimoBatchOneRegionOnly()
+   test_BigFimoOneRegionOnly   
+
+   # test_newMemeFile()
 
    test_subdivideRegion_1()
    test_subdivideRegion_2()
@@ -89,6 +93,86 @@ test_ctor <- function()
 
 } # test_ctor
 #---------------------------------------------------------------------------------------------------
+test_fimoBatchOneRegionOnly <- function()
+{
+    message(sprintf("--- test_fimoBatchOneRegionOnly"))
+
+    if(Sys.info()[["nodename"]] %in% c("hagfish.local", "khaleesi.systemsbiology.net")){
+       source("~/github/fimoService/batchMode/fimoBatchTools.R")
+    } else { # assume this is a properly configured docker
+       source("/usr/local/scripts/fimoBatchTools.R")
+       }
+
+    tbl.regions <- data.frame(chrom="chr19", start=12886171, end=12886897)
+    fimo.threshold <- 1e-6
+    meme.file <- "tmp/motifs.meme"
+    # motifs <- query(MotifDb, c("sapiens","jaspar2022"))
+    motifs <- query(MotifDb, c("sapiens"),c("jaspar2024", "hocomocov13"))
+    length(motifs) # [1] 2078
+    export(motifs, con=meme.file, format="meme")
+    tbl.fimo <- fimoBatch(tbl.regions, matchThreshold=fimo.threshold,
+                          genomeName="hg38", pwmFile=meme.file)
+    print(dim(tbl.fimo))
+    checkTrue(nrow(tbl.fimo) > 80)  # 82 9
+
+} # test_basicOneRegionOnly
+#---------------------------------------------------------------------------------------------------
+test_BigFimoOneRegionOnly <- function()
+{
+    message(sprintf("--- test_BigFimoeOneRegionOnly"))
+    
+    targetGene <- "KLF1"
+    if(file.exists(targetGene)){
+       unlink(targetGene, recursive=TRUE)
+       }
+    tbl.roi <- data.frame(chrom="chr19", start=12886171, end=12886897)
+    meme.file <- "tmp/motifs.meme"
+    motifs <- query(MotifDb, c("sapiens"),c("jaspar2024", "hocomocov13"))
+    length(motifs) # [1] 2078
+    export(motifs, con=meme.file, format="meme")
+    processCount <- 1
+
+    bf <-  BigFimo$new(targetGene,
+                       tbl.oc=tbl.roi,  # not actually open chromatin - this includes all bases
+                       processCount=processCount,
+                       fimoThreshold=1e-6,
+                       use.genehancer=FALSE,
+                       gh.elite.only=FALSE,
+                       maxGap.between.oc.and.gh=NA,
+                       chrom=tbl.roi$chrom,
+                       start=tbl.roi$start,
+                       end=tbl.roi$end,
+                       motifs=motifs,
+                       meme.file.path=meme.file)
+
+   filenames.roi <- bf$createFimoTables()
+   checkEquals(length(filenames.roi), 1)
+   checkEquals(filenames.roi[1], "KLF1.01.fimoRegions-00001.RData")
+   #bf$createMemeFile()
+   checkTrue(file.exists(meme.file))
+
+   checkEquals(length(filenames.roi), processCount)
+      # make sure these RData files, which will be read by a script that directly
+      # runs FIMO, match the regions calculated above
+   for(i in seq_len(length(filenames.roi))){
+       tbl.r <- get(load(file.path(targetGene, filenames.roi[i])))
+       checkEquals(tbl.r, tbl.roi[i,])
+       }
+   bf$runMany()
+   bf$waitForCompletion(sleepInterval=1)
+
+   fimo.output.files.by.region <-
+              list.files(path=targetGene,
+                         pattern=sprintf("^fimo.%s.*RData", targetGene))
+
+   checkEquals(length(fimo.output.files.by.region), processCount)
+   tbl.fimo <- bf$combineResults()
+   checkEquals(colnames(tbl.fimo), c("chrom", "start", "end", "tf", "strand", "score",
+                                     "p.value", "matched_sequence", "motif_id"))
+   checkTrue(nrow(tbl.fimo) > 60) # 82 currently
+
+} # test_BigFimoeOneRegionOnly
+#----------------------------------------------------------------------------------------------------
 # typical use proceeds by dividing a large genomic region into slightly overlapping
 # subregions, running fimo independently on each region, then combining and uniquing
 # the results.   test here our ability to reliably and reproducibly subdivide 
@@ -278,7 +362,8 @@ test_singleSmallRegionUsage <- function()
     checkEqualsNumeric(tbl.reduced$width/(1+end-start), 1.0, tol=1e-2)
     checkTrue(tbl.reduced$width/(1+end-start) > 1)
     
-    motifs <- query(MotifDb, c("sapiens"), c("jaspar2022"))
+    #motifs <- query(MotifDb, c("sapiens"), c("jaspar2022"))
+    motifs <- query(MotifDb, c("sapiens"), c("jaspar2024"))
     meme.file <- file.path(targetGene, "motifs.meme")
     meme.file <- "motifs.meme"
     rtracklayer::export(motifs, con=meme.file, format="meme")
@@ -286,8 +371,8 @@ test_singleSmallRegionUsage <- function()
     bf <-  BigFimo$new(targetGene,
                        tbl.oc=tbl.roi,  # not actually open chromatin - this includes all bases
                        processCount=processCount,
-                       fimoThreshold=1e-6, 
-                      use.genehancer=FALSE,
+                       fimoThreshold=1e-3,
+                       use.genehancer=FALSE,
                        gh.elite.only=FALSE,
                        maxGap.between.oc.and.gh=NA,
                        chrom=chrom, start=start, end=end,

@@ -1,8 +1,8 @@
 Package: BigFimo
 Type: Package
 Title: BigFimo
-Version: 1.0.18
-Date: 2023-06-16
+Version: 1.1.0
+Date: 2025-03-17
 Author: Paul Shannon
 Maintainer: Paul Shannon <paul.thurmond.shannon@gmail.com>
 Depends: R (>= 4.1.0), R6, GenomicRanges
@@ -14,4 +14,4 @@ NeedsCompilation: no
 VignetteBuilder:
   knitr
 Encoding: UTF-8
-RoxygenNote: 7.2.1
+RoxygenNote: 7.3.2
