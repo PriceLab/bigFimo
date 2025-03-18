@@ -1,11 +1,11 @@
 Package: BigFimo
 Type: Package
 Title: BigFimo
-Version: 1.1.1
+Version: 1.1.2
 Date: 2025-03-18
 Author: Paul Shannon
 Maintainer: Paul Shannon <paul.thurmond.shannon@gmail.com>
-Depends: R (>= 4.1.0), R6, GenomicRanges
+Depends: R (>= 4.1.0), R6, GenomicRanges, MotifDb (>= 1.49.3)
 Suggests: RUnit, knitr, rmarkdown
 Description: an R6 class for running multiple FIMO processes
 License: apache

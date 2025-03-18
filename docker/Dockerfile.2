@@ -15,7 +15,7 @@ COPY components/runBigFimoFromFile.R /usr/local/scripts/
 COPY components/runBigFimoWithChromLocsTable.R /usr/local/scripts/
 COPY components/pilraMicro.csv /usr/local/data
 COPY components/demoRunRScript.bash /usr/local/scripts/
-RUN R -f /usr/local/scripts/installPrerequisitePackages-2.R
 RUN R CMD INSTALL /usr/local/data/MotifDb_1.49.3.tar.gz
+RUN R -f /usr/local/scripts/installPrerequisitePackages-2.R
 USER root
 

@@ -1,5 +1,9 @@
 default:
-	@echo targets: roxy install test all
+	@echo roxy
+	@echo install
+	@echo build
+	@echo test 
+	@echo all [roxy install test]
 
 roxy:
 	- rm NAMESPACE
@@ -7,6 +11,9 @@ roxy:
 
 install:
 	R CMD INSTALL .  --no-test-load
+
+build:
+	R CMD build .
 test:
 	(cd inst/unitTests; make)
 

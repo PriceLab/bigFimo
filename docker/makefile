@@ -7,7 +7,7 @@ default:
 	@echo build.2
 	@echo bash.1
 	@echo bash.2 
-	@echo build2.noCache 
+	@echo build.2.noCache 
 	@echo testClass
 	@echo test.rscript.in.container.small
 	@echo test.rscript.in.container.medium
