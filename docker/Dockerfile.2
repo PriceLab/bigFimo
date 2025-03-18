@@ -7,6 +7,7 @@ ADD components/fimoBatchTools.R /usr/local/scripts/
 ADD components/human-jaspar2022-hocomoco-core-A.meme /usr/local/data/
 ADD components/human-jaspar2024-hocomocov13.meme /usr/local/data
 ADD components/tbl.fimoBeforeColumnsFixes.RData /usr/local/data/
+COPY components/MotifDb_1.49.3.tar.gz /usr/local/data
 COPY components/installPrerequisitePackages-2.R /usr/local/scripts/
 COPY components/test_BigFimoPackage.R /usr/local/scripts/
 COPY components/runBigFimo.R /usr/local/scripts/
@@ -15,6 +16,6 @@ COPY components/runBigFimoWithChromLocsTable.R /usr/local/scripts/
 COPY components/pilraMicro.csv /usr/local/data
 COPY components/demoRunRScript.bash /usr/local/scripts/
 RUN R -f /usr/local/scripts/installPrerequisitePackages-2.R
-
+RUN R CMD INSTALL /usr/local/data/MotifDb_1.49.3.tar.gz
 USER root
 

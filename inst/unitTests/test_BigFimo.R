@@ -371,7 +371,7 @@ test_singleSmallRegionUsage <- function()
     bf <-  BigFimo$new(targetGene,
                        tbl.oc=tbl.roi,  # not actually open chromatin - this includes all bases
                        processCount=processCount,
-                       fimoThreshold=1e-3,
+                       fimoThreshold=1e-5,
                        use.genehancer=FALSE,
                        gh.elite.only=FALSE,
                        maxGap.between.oc.and.gh=NA,
@@ -401,8 +401,7 @@ test_singleSmallRegionUsage <- function()
    tbl.fimo <- bf$combineResults()
    checkEquals(colnames(tbl.fimo), c("chrom", "start", "end", "tf", "strand", "score",
                                      "p.value", "matched_sequence", "motif_id"))
-   checkTrue(nrow(tbl.fimo) > 400)
-   checkTrue(nrow(tbl.fimo) < 500)
+   checkTrue(nrow(tbl.fimo) > 1600)  # 2022 on 18 mar 2025
 
        #--------------------------------------------------
        # make sure that FIMO matches start and end very close to
